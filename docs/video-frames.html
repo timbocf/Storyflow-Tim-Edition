@@ -42,7 +42,7 @@
 <h2>Frames by Dialog (💬)</h2>
 <p>This one answers "how long should this clip be?" from the script itself:</p>
 <ol>
-<li>It reads the current concat bucket and finds everything inside <strong>straight double quotes</strong> — your spoken lines. Curly quotes don't count.</li>
+<li>It reads the current concat bucket and finds everything inside <strong>double quotes</strong> — your spoken lines. The original counted only straight quotes (<code>"..."</code>); the Tim Edition also counts curly quotes (<code>“...”</code>), which iPad/iPhone keyboards type by default — with the original, dialogue typed on an iPad counted as zero words and clips came out far too short.</li>
 <li>It counts the words in those lines.</li>
 <li>It converts words to time using your <strong>Words Per Second</strong> setting (the Editor clamps it to 1.2–3.2; default 2.4 — a natural speaking pace).</li>
 <li>It rounds the result <em>up</em> to the loaded model's frame pattern and adds your <strong>Pad Frames</strong> (default 49, snapped to an 8n+1 value) — breathing room before/after the line.</li>

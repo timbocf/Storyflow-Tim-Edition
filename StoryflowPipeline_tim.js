@@ -541,13 +541,18 @@ function calculateFrames(wordCount, pacing, { fps, step, offset }) {
 
 function framesDialog(pacing) {
   // 1. Extract words between quotes
-  const quoteRegex = /"([^"]+)"/g;
+  // [Tim edition fix] also match curly quotes (“ ”): iPad/iPhone
+  // keyboards type those by default, and the original straight-quote-only
+  // pattern counted such dialogue as zero words, so clips came out far
+  // too short for the lines in them.
+  const quoteRegex = /"([^"]+)"|“([^”]+)”/g;
   const matches = [...concat.matchAll(quoteRegex)];
 
-  // 2. Count words
+  // 2. Count words (group 1 = straight-quoted, group 2 = curly-quoted)
   let wordCount = 0;
   matches.forEach((match) => {
-    const tokens = match[1].trim().split(/\s+/);
+    const quoted = match[1] !== undefined ? match[1] : match[2];
+    const tokens = quoted.trim().split(/\s+/);
     wordCount += tokens.length;
   });
 
