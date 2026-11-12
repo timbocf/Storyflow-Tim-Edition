@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Walkthrough: Actor Reference Sheet — Storyflow Tim Edition Docs</title>
+<link rel="stylesheet" href="docs.css">
+</head>
+<body>
+<div class="layout">
+<nav class="sidebar">
+  <h2>Storyflow Docs</h2>
+  <div class="sub">Tim Edition · based on Storyflow 261101 by wetcircuit</div>
+  <a href="index.html">📚 Docs Home</a>
+  <a href="how-it-works.html">⚙️ How It Works</a>
+  <a href="editor-guide.html">🧱 Editor Guide</a>
+  <a href="instructions.html">📋 Instruction Reference</a>
+  <a href="wildcards-loops.html">🎲 Wildcards, Sweeps &amp; Loops</a>
+  <a href="video-frames.html">🎞️ Video Frames &amp; Dialog</a>
+  <a href="walkthrough-actor-sheet.html" class="current">🎭 Walkthrough: Actor Sheet</a>
+  <a href="tim-edition.html">🔧 Tim Edition Changes</a>
+  <div class="sep"></div>
+  <a href="../index.html">✏️ Back to the Editor</a>
+  <a href="https://github.com/timbocf/Storyflow-Tim-Edition">💻 GitHub Repo</a>
+</nav>
+<main>
+<div class="crumb">Docs › Walkthrough: Actor Reference Sheet</div>
+<h1>Walkthrough: Actor Reference Sheet</h1>
+<p class="lede">The workflow from Cutscene Artist's "Create Actor Reference with Storyflow" video, using the bundled <strong>Photo to Actor</strong> sample project: start from one photo, end with a multi-view sheet of the same person in a chosen costume — the kind of sheet you reuse to keep a character consistent (or crop for LoRA training).</p>
+
+<h2>Before you start</h2>
+<ol>
+<li><strong>Install the Pipeline once.</strong> iPad: put the Pipeline <code>.js</code> file in Files → On My iPad → Draw Things → Scripts, then relaunch Draw Things. Mac: <code>~/Library/Containers/com.liuliu.draw-things/Data/Documents/Scripts/</code>. (Alternative from the original readme: create a new script inside Draw Things, select-all and delete its boilerplate, paste the whole file in, save.)</li>
+<li><strong>Set up Draw Things first.</strong> Load the model you want (the video's workflow uses a Qwen image/edit setup) and dial in your usual settings. The Photo to Actor project contains no Config instruction, so it inherits whatever Draw Things is currently set to — model, steps, everything.</li>
+<li><strong>Have a photo ready</strong> in a place the image picker can reach.</li>
+</ol>
+
+<h2>The project's list, step by step</h2>
+<table>
+<tr><th>#</th><th>Instruction</th><th>What happens and why</th></tr>
+<tr><td>1–2</td><td>Clear Image · Clear Moodboard</td><td>Clean slate — no leftover canvas or references.</td></tr>
+<tr><td>3</td><td>Size 1024×1024</td><td>A square working canvas for the face stage.</td></tr>
+<tr><td>4</td><td>Swap</td><td><strong>The run pauses.</strong> You pick your photo. This is the raw material everything else derives from.</td></tr>
+<tr><td>5</td><td>Face Zoom</td><td>The view zooms onto the detected face, so the next step works on a close-up instead of a whole scene.</td></tr>
+<tr><td>6</td><td>Interrogate</td><td>The answer model describes the face — the project's question asks for a brief sentence covering gender, age, hair texture, and similar identifying traits. The answer lands in the bucket. <em>This text is the character's identity for the rest of the job.</em></td></tr>
+<tr><td>7</td><td>Approve</td><td><strong>The run pauses again.</strong> The description is shown in an editable box. Fix it here — anything wrong in this sentence will be faithfully reproduced in the render. Whatever you leave in the box is the bucket going forward.</td></tr>
+<tr><td>8</td><td>Canvas to MB</td><td>The (zoomed) face photo goes onto the moodboard as a visual reference, so the edit model can <em>see</em> the person as well as read the description.</td></tr>
+<tr><td>9–10</td><td>Clear Image · Size 2048×1152</td><td>Fresh canvas at sheet size — wide, for a close-up plus full-body views side by side.</td></tr>
+<tr><td>11–12</td><td>Concat + Wildcard</td><td>The bucket gets "The Costume is" plus one card picked at random from the project's costume list. Re-run the project for a different outfit, or edit the cards to dress the character yourself.</td></tr>
+<tr><td>13</td><td>Approve</td><td>One more pause to check/edit the combined description + costume text before it renders.</td></tr>
+<tr><td>14</td><td>Prefix</td><td>Bolts the sheet instructions onto the front of the bucket: multiple views of the same actor, same costume, on a white background.</td></tr>
+<tr><td>15</td><td>Prompt</td><td><strong>Renders.</strong> Lays out the sheet: close-up face at left, three full-body views at right. The moodboard face reference plus the edited description are what keep it the same person.</td></tr>
+</table>
+
+<h2>Running it</h2>
+<ol>
+<li>Load <em>Photo to Actor</em> in the Editor (or rebuild the list from the table above) and <strong>Export to Clipboard</strong>.</li>
+<li>In Draw Things, run <strong>StoryflowPipeline</strong>, paste into Menu A.</li>
+<li><strong>Preflight:</strong> check the render count is 1, and when the answer-model menu appears pick <strong>Qwen 3.5 4B</strong> if your device can run it (it's the recommended one; it doesn't run on every device — fall back to the default if it misbehaves).</li>
+<li>Press <strong>Start Pipeline</strong> and stay nearby for the two pauses (Swap, then the two Approves).</li>
+<li>The finished sheet is on the canvas. Save it from Draw Things — or add a <strong>Save Full</strong> instruction at the end of the list if you want it filed to Pictures automatically every run.</li>
+</ol>
+<div class="tip"><strong>Make it yours:</strong> replace the costume Wildcard's cards with your own list, add a Config item at the top to pin the model/settings instead of inheriting Draw Things' current state, and Save Project under a new name. Every future actor is then: run, pick photo, approve description, done.</div>
+
+<h2>The other two sample projects, decoded</h2>
+<h3>CharacterSheet 3×2 (1920×1280)</h3>
+<p>A loop of 8 that builds each prompt entirely from Concat glue plus four <strong>shuffle</strong> Wildcards (creature type, clothing, accessory, coat description), then a single Prompt describing a 3×2 grid of camera views. The view descriptions are <code>@</code> prompt triggers (<code>@closeup</code>, <code>@profile</code>, …) defined in the project's Prompt Triggers tab, and a full Config item (Krea 2 Turbo with tiled decoding) pins the setup. Its Note says it's for making character sheets to crop for training data. Same pattern as the <a href="wildcards-loops.html">minimal variety loop</a>, scaled up.</p>
+<h3>Juxtapolooza Dark Art</h3>
+<p>The Sweep showcase: a Config for an SDXL model, <strong>XL Magic</strong> (3/4/7), a persistent Negative, then a loop of 10 where a <strong>Sweep</strong> steps <code>stochasticSamplingGamma</code> upward pass by pass while the prompt is assembled from alternating Concat glue words ("by", "of", "in the style of") and shuffle/random Wildcards of mediums, artists, scenarios, and subjects. A good study in combining several independent pickers in one loop.</p>
+
+<div class="seealso"><strong>See also:</strong> <a href="instructions.html">Instruction Reference</a> · <a href="how-it-works.html">How It Works</a> (preflight, answer models) · <a href="editor-guide.html">Editor Guide</a></div>
+</main>
+</div>
+</body>
+</html>

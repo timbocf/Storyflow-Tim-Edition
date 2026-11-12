@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How It Works — Storyflow Tim Edition Docs</title>
+<link rel="stylesheet" href="docs.css">
+</head>
+<body>
+<div class="layout">
+<nav class="sidebar">
+  <h2>Storyflow Docs</h2>
+  <div class="sub">Tim Edition · based on Storyflow 261101 by wetcircuit</div>
+  <a href="index.html">📚 Docs Home</a>
+  <a href="how-it-works.html" class="current">⚙️ How It Works</a>
+  <a href="editor-guide.html">🧱 Editor Guide</a>
+  <a href="instructions.html">📋 Instruction Reference</a>
+  <a href="wildcards-loops.html">🎲 Wildcards, Sweeps &amp; Loops</a>
+  <a href="video-frames.html">🎞️ Video Frames &amp; Dialog</a>
+  <a href="walkthrough-actor-sheet.html">🎭 Walkthrough: Actor Sheet</a>
+  <a href="tim-edition.html">🔧 Tim Edition Changes</a>
+  <div class="sep"></div>
+  <a href="../index.html">✏️ Back to the Editor</a>
+  <a href="https://github.com/timbocf/Storyflow-Tim-Edition">💻 GitHub Repo</a>
+</nav>
+<main>
+<div class="crumb">Docs › How It Works</div>
+<h1>How It Works</h1>
+<p class="lede">Storyflow splits one job between two programs that never talk to each other directly. The Editor is a recipe builder. The Pipeline is the cook. The hand-off between them is a block of text.</p>
+
+<h2>The journey of a job</h2>
+<ol>
+<li><strong>Build.</strong> In the Editor you stack instruction blocks in order — clear the canvas, set the size, build a prompt, render, save.</li>
+<li><strong>Export.</strong> <em>Export to Pipeline</em> downloads a <code>.txt</code> file (or <em>Export to Clipboard</em> copies it). The export is a JSON list of small one-key objects, in the order of your list, ending with an end marker:
+<pre><code>[
+  {"note": "My first project"},
+  {"canvasClear": true},
+  {"size": {"width": 1920, "height": 1280}},
+  {"concat": "a portrait of "},
+  {"prompt": "@hero, smiling, studio light"},
+  {"canvasSave": "myProject/result.png"},
+  {"end": true}
+]</code></pre></li>
+<li><strong>Paste.</strong> In Draw Things you run the <strong>StoryflowPipeline</strong> script. The first popup (Menu A) is a big text box — paste the whole export, brackets and all.</li>
+<li><strong>Preflight.</strong> The script checks your instructions before running anything (Menu B — see below).</li>
+<li><strong>Run.</strong> Press <em>Start Pipeline</em>. The script walks the list top to bottom, doing each instruction against the live Draw Things canvas, and stops at the end marker.</li>
+</ol>
+
+<h2>The three pieces of state</h2>
+<p>Almost every instruction exists to change one of three things the Pipeline carries through the run:</p>
+<table>
+<tr><th>State</th><th>What it is</th><th>Who changes it</th></tr>
+<tr><td><strong>configuration</strong></td><td>The Draw Things settings the next render will use — model, steps, LoRAs, sampler, size, and so on. Starts as whatever Draw Things is currently set to. Config-type instructions overwrite individual settings in it; nothing renders until a Prompt fires. Changes <em>stay changed</em> in Draw Things after the run ends.</td><td>Config, Size, Sweep, Frames, High-res Fix, In-paint Tools, XL Magic…</td></tr>
+<tr><td><strong>concat</strong></td><td>A text bucket, empty at the start. Text instructions pour prompt words into it. A <strong>Prompt</strong> instruction renders using everything in the bucket plus its own text — then <em>empties the bucket</em> for the next render. This bucket is the heart of Storyflow: most prompt features exist just to build it up in stages.</td><td>Concat, Wildcard, Interrogate, Enhance, Prefix, Get Prompt, Approve…</td></tr>
+<tr><td><strong>mask</strong></td><td>A sticky mask layer. Once set, it is handed to every render (for inpainting) until it is cleared.</td><td>Load Mask, Foreground/Background Mask, Body Mask, Clear Mask…</td></tr>
+</table>
+
+<div class="note"><strong>Why nothing renders:</strong> if your list has no <strong>Prompt</strong> instruction (and no Frames-by-Dialog with its Generate box ticked), the run will happily do all the preparation and finish without rendering a single image. Preparation is not rendering.</div>
+
+<h2>The Preflight Check (Menu B)</h2>
+<p>Before running, the Pipeline validates the pasted instructions and shows you a report. Read it like a checklist:</p>
+<ul>
+<li><strong>Number of renders</strong> — how many Prompt instructions (plus generating Frames-by-Dialog items) it found.</li>
+<li><strong>Models</strong> — every model named anywhere in your Config items (including LoRA files), marked 🔹 downloaded or 🔸 not available locally. A 🔸 model will fail or fall back when the run reaches it.</li>
+<li><strong>Files</strong> — every save (🔻) and load (🔺) path, relative to your device's <strong>Pictures</strong> folder. Two warnings baked into this screen: folders are <em>not</em> created for you (a save into a folder that doesn't exist will fail), and a save <em>will</em> overwrite a file with the same name.</li>
+<li><strong>Answer model</strong> — if the job uses Interrogate, Enhance, or Ask Zoom, you also pick which vision model answers: <em>interrogate default</em>, <em>Qwen 3.5 4B</em> (recommended if your device can run it), or <em>Moondream2</em>.</li>
+</ul>
+<p>If validation fails — bad JSON, an instruction the Pipeline doesn't recognize, a wrong value type, a save path that doesn't end in <code>.png</code> — Menu B instead lists every problem with troubleshooting notes. In the Tim Edition the script then <strong>stops</strong> and runs nothing (the original would continue if you confirmed the warning screen — see <a href="tim-edition.html">Tim Edition Changes</a>).</p>
+
+<h2>Two popups where the run waits for you</h2>
+<p>Most instructions run hands-free, but two are deliberate pauses:</p>
+<ul>
+<li><strong>Swap</strong> — stops so you can pick or replace the canvas image yourself.</li>
+<li><strong>Approve</strong> — stops and shows the current concat bucket in an editable box. Whatever you leave in the box is what the next Prompt renders with. It belongs right after an Interrogate or Enhance, so you can fix the model's wording before it becomes a prompt.</li>
+</ul>
+
+<h2>House rules worth knowing</h2>
+<ul>
+<li>Instructions run <strong>strictly top to bottom</strong>. Order is the whole programming language.</li>
+<li>File paths in instructions are relative to the device <strong>Pictures</strong> folder. Loads accept PNG/JPG/WebP; saves must be PNG.</li>
+<li>If no Config instruction ever names a model, the job runs on whatever model you already had loaded in Draw Things.</li>
+<li>The Editor and Pipeline are versioned together (261101). Keep them matched — an Editor newer than the Pipeline can export instructions the Pipeline will reject at preflight.</li>
+</ul>
+
+<div class="seealso"><strong>See also:</strong> <a href="editor-guide.html">Editor Guide</a> · <a href="instructions.html">Instruction Reference</a> · <a href="walkthrough-actor-sheet.html">Walkthrough: Actor Sheet</a></div>
+</main>
+</div>
+</body>
+</html>

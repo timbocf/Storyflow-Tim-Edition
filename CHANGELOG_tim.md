@@ -22,6 +22,9 @@ These two files are Tim's own copies to modify:
 4. **Export to Clipboard did nothing on iPad (Editor).**
    Reported by Tim Nov 12, 2026. The original was one `navigator.clipboard.writeText()` call — no error handling, no success/failure feedback. On iPad that API exists only in secure contexts (https pages; not local files or in-app previews), and when blocked its promise rejects silently, so the button appeared completely dead. (Side discovery: the Editor also *calls* a `showToastNotification` function that is never defined anywhere in the file — so it had no working feedback mechanism at all.) The button now tries three routes in order: the modern Clipboard API; the legacy textarea + `execCommand("copy")` route (works in several places the modern API doesn't); and, if both are blocked, a popup showing the export text already selected for long-press → Copy. The button label also reports the result ("✅ Copied!" or "⚠️ Copy blocked — see popup"), reverting after a couple of seconds.
 
+5. **Documentation wiki added (Nov 12, 2026).**
+   A wiki-style documentation set now lives in `docs/` in the repo (Docs Home, How It Works, Editor Guide, Instruction Reference, Wildcards/Sweeps/Loops, Video Frames & Dialog, Actor Sheet walkthrough, Tim Edition Changes), served by GitHub Pages at https://timbocf.github.io/Storyflow-Tim-Edition/docs/, and the Editor header links to it ("📖 Documentation") alongside the original links. The header also gained a "⬇️ Tim Edition Pipeline" link that downloads this edition's Pipeline file directly. (In the original, the only in-tool help was placeholder text inside empty fields, plus a separate .txt doc.)
+
 Every fix is marked in the code with a `[Tim edition fix]` comment next to the changed lines, so the changes are easy to find, review, or revert.
 
 ## Validation done

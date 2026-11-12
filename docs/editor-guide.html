@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Editor Guide — Storyflow Tim Edition Docs</title>
+<link rel="stylesheet" href="docs.css">
+</head>
+<body>
+<div class="layout">
+<nav class="sidebar">
+  <h2>Storyflow Docs</h2>
+  <div class="sub">Tim Edition · based on Storyflow 261101 by wetcircuit</div>
+  <a href="index.html">📚 Docs Home</a>
+  <a href="how-it-works.html">⚙️ How It Works</a>
+  <a href="editor-guide.html" class="current">🧱 Editor Guide</a>
+  <a href="instructions.html">📋 Instruction Reference</a>
+  <a href="wildcards-loops.html">🎲 Wildcards, Sweeps &amp; Loops</a>
+  <a href="video-frames.html">🎞️ Video Frames &amp; Dialog</a>
+  <a href="walkthrough-actor-sheet.html">🎭 Walkthrough: Actor Sheet</a>
+  <a href="tim-edition.html">🔧 Tim Edition Changes</a>
+  <div class="sep"></div>
+  <a href="../index.html">✏️ Back to the Editor</a>
+  <a href="https://github.com/timbocf/Storyflow-Tim-Edition">💻 GitHub Repo</a>
+</nav>
+<main>
+<div class="crumb">Docs › Editor Guide</div>
+<h1>Editor Guide</h1>
+<p class="lede">The Editor is a single web page. It never touches Draw Things — its whole job is producing the instruction text the Pipeline runs. This page walks every part of it.</p>
+
+<h2>The header</h2>
+<ul>
+<li><strong>Project name</strong> — type it into the title field. It's used in the Preview header and as the export file name.</li>
+<li><strong>Documentation</strong> — this wiki.</li>
+<li><strong>Tim Edition Pipeline</strong> — downloads the fixed Pipeline script from this site, ready to install into Draw Things.</li>
+<li><strong>Storyflow Online / Pipeline Plugin / GetConfigPro</strong> — links to wetcircuit's original site and downloads. GetConfigPro is her separate helper for capturing Draw Things settings as Config items.</li>
+<li><strong>Theme picker</strong> (🍧 day / 🌙 night / ⚡ cyberpunk) — cosmetic only. Your choice is remembered between visits; it is the <em>only</em> thing the Editor remembers on its own.</li>
+</ul>
+
+<h2>The action bar</h2>
+<table>
+<tr><th>Button</th><th>What it does</th></tr>
+<tr><td>🆕 New Project</td><td>Clears everything and starts with a single empty Note.</td></tr>
+<tr><td>💾 Save Project</td><td>Downloads the project as a <code>.json</code> file — your editable source, including the instruction list <em>and</em> all four shorthand libraries below. Keep this file; the export alone can't be re-edited.</td></tr>
+<tr><td>📂 Load Project</td><td>Loads a project <code>.json</code> back into the Editor.</td></tr>
+<tr><td>⬇️ Export to Pipeline</td><td>Downloads the instruction list as a <code>.txt</code> in Pipeline format.</td></tr>
+<tr><td>📋 Export to Clipboard</td><td>Copies the same export text instead. In the Tim Edition it tries the modern clipboard, then a legacy method, then shows a manual-copy popup — and the button reports whether it worked (see <a href="tim-edition.html">Tim Edition Changes</a>).</td></tr>
+</table>
+<div class="warn"><strong>No autosave, no undo.</strong> Closing the tab loses unsaved work, and there is no undo for a deleted item. Save Project early and often.</div>
+
+<h2>The instruction list</h2>
+<p>Your project is the numbered list in the middle of the page. Each item shows a drag handle (<strong>⋮⋮</strong>), its type, and its fields. Drag the handle to reorder — the Editor has custom touch-drag handling so this works on iPad. The ❌ deletes the item. There is no duplicate-item button, so repetitive lists are built by hand.</p>
+
+<h2>The tray (adding instructions)</h2>
+<p>The panel at the bottom is where new instructions come from. It has three sizes — click its toggle to cycle collapsed / medium / full. It contains:</p>
+<ul>
+<li><strong>The speed rail</strong> — six everyday items you can drag straight into the list: Note, Clear Image, Size, Prompt, Frames-by-Dialog (💬), Crop.</li>
+<li><strong>The full button grid</strong> — every instruction, grouped by category (Prompts / Img Vid / Config / Canvas / Moodboard / Mask / Layers / Loop), with filter tabs to show one category at a time. Click a button to append the item, or drag it into place.</li>
+</ul>
+<p>Button colors match the categories, which helps once a list gets long.</p>
+
+<h2>The tabs and the four shorthand libraries</h2>
+<p>The <strong>Instruction List</strong> tab is the main view. The other tabs open as panels over it. Four of them are libraries of reusable shorthand that get expanded at export time — and telling them apart is the most confusing part of Storyflow, because three of them look similar:</p>
+<table>
+<tr><th>Library</th><th>Symbol</th><th>Used in</th><th>How it expands</th></tr>
+<tr><td><strong>Prompt Triggers</strong></td><td><code>@name</code></td><td>Prompt, Concat, Prefix, Negative text</td><td>Define <code>@hero</code> once as a long description; type <code>@hero</code> anywhere in prompt text and the full description is substituted at export. Triggers can contain other triggers — expansion repeats until nothing changes.</td></tr>
+<tr><td><strong>Wildcards</strong> (Editor kind)</td><td><code>$name</code></td><td>Prompt text</td><td>Options separated by <code>|</code>. At export, one option is picked <strong>at random, once</strong>, and that fixed text is exported — re-export to re-roll. <code>$name[2]</code> picks option 2 specifically. <em>Not</em> the same thing as the Wildcard <em>instruction</em>, which picks at runtime in Draw Things (see <a href="wildcards-loops.html">Wildcards, Sweeps &amp; Loops</a>).</td></tr>
+<tr><td><strong>Config Shortcuts</strong></td><td><code>#name</code></td><td>Config items</td><td>Stores a whole chunk of Draw Things settings JSON. A Config item can be just <code>#16:9</code> or <code>#wan_i2v</code>; at export the full settings are swapped in. Change the shortcut once and every Config item using it changes — the "set it in one place" tool.</td></tr>
+<tr><td><strong>JSON Poses</strong></td><td><code>#name</code></td><td>JSON Pose items</td><td>Stores OpenPose skeleton JSON under a name. Yes, same <code>#</code> symbol as Config Shortcuts — which library applies depends on which kind of item you're typing in.</td></tr>
+</table>
+<div class="warn"><strong>Careful with cycles:</strong> if a trigger's text (directly or through others) contains itself, the expansion loop never finishes and the Editor tab hangs. Keep trigger definitions one-directional.</div>
+
+<h2>The Preview tab</h2>
+<p>Preview shows the project name, how many Prompt instructions you have, total Wan/LTX video running time, and a numbered, readable rendering of the list with <code>@</code> triggers already expanded. Wildcard and Sweep items show only their first card.</p>
+<p>What Preview does <em>not</em> do: it doesn't expand <code>$</code> wildcards or <code>#</code> config shortcuts, and its running-time totals don't include MiniMax H3 frames. Treat Preview as a sanity check, not a photograph of the export.</p>
+
+<h2>Projects vs exports — don't mix them up</h2>
+<table>
+<tr><th></th><th>Project (.json)</th><th>Export (.txt / clipboard)</th></tr>
+<tr><td>Purpose</td><td>Your editable source</td><td>What the Pipeline runs</td></tr>
+<tr><td>Contains</td><td>Instruction list + all four libraries</td><td>Instructions only, shorthand already expanded</td></tr>
+<tr><td>Can be re-opened in the Editor?</td><td>Yes</td><td>No</td></tr>
+</table>
+
+<div class="seealso"><strong>See also:</strong> <a href="how-it-works.html">How It Works</a> · <a href="instructions.html">Instruction Reference</a> · <a href="wildcards-loops.html">Wildcards, Sweeps &amp; Loops</a></div>
+</main>
+</div>
+</body>
+</html>

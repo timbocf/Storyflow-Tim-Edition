@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Video Frames &amp; Dialog — Storyflow Tim Edition Docs</title>
+<link rel="stylesheet" href="docs.css">
+</head>
+<body>
+<div class="layout">
+<nav class="sidebar">
+  <h2>Storyflow Docs</h2>
+  <div class="sub">Tim Edition · based on Storyflow 261101 by wetcircuit</div>
+  <a href="index.html">📚 Docs Home</a>
+  <a href="how-it-works.html">⚙️ How It Works</a>
+  <a href="editor-guide.html">🧱 Editor Guide</a>
+  <a href="instructions.html">📋 Instruction Reference</a>
+  <a href="wildcards-loops.html">🎲 Wildcards, Sweeps &amp; Loops</a>
+  <a href="video-frames.html" class="current">🎞️ Video Frames &amp; Dialog</a>
+  <a href="walkthrough-actor-sheet.html">🎭 Walkthrough: Actor Sheet</a>
+  <a href="tim-edition.html">🔧 Tim Edition Changes</a>
+  <div class="sep"></div>
+  <a href="../index.html">✏️ Back to the Editor</a>
+  <a href="https://github.com/timbocf/Storyflow-Tim-Edition">💻 GitHub Repo</a>
+</nav>
+<main>
+<div class="crumb">Docs › Video Frames &amp; Dialog</div>
+<h1>Video Frames &amp; Dialog</h1>
+<p class="lede">Three Frames instructions set how long the next video render runs, and a fourth — Frames by Dialog — works the length out from spoken lines. All four export as the same underlying <code>frames</code> setting in Draw Things; which model you have loaded decides what a given count means.</p>
+
+<h2>The three frame rules</h2>
+<p>The frame counts aren't free-form numbers. Each video family only accepts counts on a pattern, and the Editor's sliders snap to it:</p>
+<table>
+<tr><th>Instruction</th><th>Pattern</th><th>Examples</th><th>Frame rate</th><th>Range</th></tr>
+<tr><td>Frames — Wan</td><td>Steps of 4, offset 1 (4n+1)</td><td>1, 5, 9, 13 …</td><td>16 fps</td><td>up to 128 (≈8 sec)</td></tr>
+<tr><td>Frames — LTX</td><td>Steps of 8, offset 1 (8n+1)</td><td>1, 9, 17, 25 …</td><td>25 fps</td><td>up to ~1000</td></tr>
+<tr><td>Frames — H3</td><td>Steps of 17, offset 5</td><td>5, 22, 39, 56 …</td><td>24 fps</td><td>slider 0 = 1 frame (a still)</td></tr>
+</table>
+<p>The odd patterns are the video models' own rules, not Storyflow being awkward — the models generate in blocks, so counts in between patterns aren't valid. Each slider shows the frame count and the matching seconds as you drag.</p>
+<div class="note"><strong>Tim Edition fix:</strong> in the original Editor, the H3 slider's badge followed the H3 rule but the export used the Wan/LTX "+1" shortcut — a badge reading 22 exported 18. The Tim Edition exports what the badge shows. See <a href="tim-edition.html">Tim Edition Changes</a>.</div>
+
+<h2>Frames by Dialog (💬)</h2>
+<p>This one answers "how long should this clip be?" from the script itself:</p>
+<ol>
+<li>It reads the current concat bucket and finds everything inside <strong>straight double quotes</strong> — your spoken lines. Curly quotes don't count.</li>
+<li>It counts the words in those lines.</li>
+<li>It converts words to time using your <strong>Words Per Second</strong> setting (the Editor clamps it to 1.2–3.2; default 2.4 — a natural speaking pace).</li>
+<li>It rounds the result <em>up</em> to the loaded model's frame pattern and adds your <strong>Pad Frames</strong> (default 49, snapped to an 8n+1 value) — breathing room before/after the line.</li>
+</ol>
+<p><strong>Which pattern?</strong> The Pipeline looks at the loaded model's name: if it contains "H3" it uses 24 fps / step 17 / offset 5; anything else gets 25 fps / step 8 / offset 1 (the LTX rule).</p>
+<div class="warn"><strong>Known issue — Wan timing runs long:</strong> because everything that isn't H3 gets the LTX rule, Frames by Dialog used with a Wan model (16 fps, step 4) produces more frames than the dialog needs. The clip comes out longer than the line. Still on the fix list — see <a href="tim-edition.html">Tim Edition Changes</a>.</div>
+
+<h3>The Generate checkbox</h3>
+<p>Frames by Dialog has an optional <strong>Generate</strong> box. Tick it and the instruction also renders on the spot, using the bucket as the prompt — no separate Prompt item needed, and the preflight render counter counts it as a render. Leave it unticked and it only sets the frame count, so the following Prompt (or video instruction sequence) renders with that length.</p>
+
+<h3>Worked example</h3>
+<p>Bucket contains: <code>A cowboy turns to camera. "Well, I reckon this town ain't big enough for the both of us."</code></p>
+<ul>
+<li>Quoted words: 13</li>
+<li>At 2.4 words/sec → ≈5.4 seconds of speech</li>
+<li>On an LTX-pattern model (25 fps): 5.4 sec → 136 frames → rounded up to the 8n+1 pattern → 137, plus 49 pad frames → <strong>186 → snapped to pattern</strong> as the code rounds and pads — the point is the length comes from the line, not from a guess.</li>
+</ul>
+
+<div class="seealso"><strong>See also:</strong> <a href="instructions.html">Instruction Reference</a> (Img/Vid group) · <a href="how-it-works.html">How It Works</a> (the concat bucket)</div>
+</main>
+</div>
+</body>
+</html>

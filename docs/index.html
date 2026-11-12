@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Documentation — Storyflow Tim Edition</title>
+<link rel="stylesheet" href="docs.css">
+</head>
+<body>
+<div class="layout">
+<nav class="sidebar">
+  <h2>Storyflow Docs</h2>
+  <div class="sub">Tim Edition · based on Storyflow 261101 by wetcircuit</div>
+  <a href="index.html" class="current">📚 Docs Home</a>
+  <a href="how-it-works.html">⚙️ How It Works</a>
+  <a href="editor-guide.html">🧱 Editor Guide</a>
+  <a href="instructions.html">📋 Instruction Reference</a>
+  <a href="wildcards-loops.html">🎲 Wildcards, Sweeps &amp; Loops</a>
+  <a href="video-frames.html">🎞️ Video Frames &amp; Dialog</a>
+  <a href="walkthrough-actor-sheet.html">🎭 Walkthrough: Actor Sheet</a>
+  <a href="tim-edition.html">🔧 Tim Edition Changes</a>
+  <div class="sep"></div>
+  <a href="../index.html">✏️ Back to the Editor</a>
+  <a href="https://github.com/timbocf/Storyflow-Tim-Edition">💻 GitHub Repo</a>
+</nav>
+<main>
+<h1>Storyflow Documentation</h1>
+<p class="lede">Storyflow is a two-part automation tool for Draw Things. You build a list of instructions in a web page (the <strong>Editor</strong>), export it, and a script inside Draw Things (the <strong>Pipeline</strong>) carries the instructions out one at a time — building prompts, changing settings, moving the canvas, and rendering for you.</p>
+
+<p>This wiki explains every feature in plain language: what it does, when you'd use it, and the quirks the original documentation didn't mention. It covers the <strong>Tim Edition</strong> — a fork of wetcircuit's Storyflow 261101 with several bug fixes. The original tool and videos are by <a href="https://cutsceneartist.com/DrawThings/">Cutscene Artist (wetcircuit)</a>.</p>
+
+<h2>Start here</h2>
+<table>
+<tr><th>Page</th><th>What's in it</th></tr>
+<tr><td><a href="how-it-works.html">How It Works</a></td><td>The big picture: the journey from Editor list to finished render, the export format, the three pieces of state that explain almost everything, and how to read the Preflight Check.</td></tr>
+<tr><td><a href="editor-guide.html">Editor Guide</a></td><td>Every part of the Editor page: the project buttons, the tray, the tabs, and the four shorthand libraries (<code>@</code> triggers, <code>$</code> wildcards, <code>#</code> config shortcuts, <code>#</code> pose shortcuts).</td></tr>
+<tr><td><a href="instructions.html">Instruction Reference</a></td><td>All ~55 instructions, grouped the same way as the Editor's tray, each with what it does and what to watch out for.</td></tr>
+<tr><td><a href="wildcards-loops.html">Wildcards, Sweeps &amp; Loops</a></td><td>The six picking modes (loop, once, shuffle, random, menu, combobox), how loops repeat work, and the incremental file system for batch jobs.</td></tr>
+<tr><td><a href="video-frames.html">Video Frames &amp; Dialog</a></td><td>The frame-count rules for Wan, LTX, and MiniMax H3, and how Frames-by-Dialog turns spoken lines into a frame count.</td></tr>
+<tr><td><a href="walkthrough-actor-sheet.html">Walkthrough: Actor Sheet</a></td><td>A complete worked example — turning a photo into a consistent actor reference sheet — plus the other two sample projects explained.</td></tr>
+<tr><td><a href="tim-edition.html">Tim Edition Changes</a></td><td>What this fork fixes compared to the original 261101, and the known issues still on the list.</td></tr>
+</table>
+
+<h2>The 60-second version</h2>
+<ol>
+<li><strong>Build</strong> a list of instructions in the Editor (or load a sample project).</li>
+<li><strong>Save Project</strong> (your editable source file) and <strong>Export to Pipeline / Clipboard</strong>.</li>
+<li>In Draw Things, run the <strong>StoryflowPipeline</strong> script and paste the export into the first popup.</li>
+<li>Read the <strong>Preflight Check</strong>, pick an answer model if asked, and press <strong>Start Pipeline</strong>.</li>
+<li>The Pipeline walks your list top to bottom. A <strong>Prompt</strong> instruction is what actually renders — everything before it is preparation.</li>
+</ol>
+
+<div class="tip"><strong>New to Storyflow?</strong> Read <a href="how-it-works.html">How It Works</a> first — once the "concat bucket" idea clicks, every other feature falls into place.</div>
+
+<div class="seealso"><strong>See also:</strong> <a href="how-it-works.html">How It Works</a> · <a href="../index.html">Open the Editor</a></div>
+</main>
+</div>
+</body>
+</html>

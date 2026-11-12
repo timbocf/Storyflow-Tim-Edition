@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tim Edition Changes — Storyflow Tim Edition Docs</title>
+<link rel="stylesheet" href="docs.css">
+</head>
+<body>
+<div class="layout">
+<nav class="sidebar">
+  <h2>Storyflow Docs</h2>
+  <div class="sub">Tim Edition · based on Storyflow 261101 by wetcircuit</div>
+  <a href="index.html">📚 Docs Home</a>
+  <a href="how-it-works.html">⚙️ How It Works</a>
+  <a href="editor-guide.html">🧱 Editor Guide</a>
+  <a href="instructions.html">📋 Instruction Reference</a>
+  <a href="wildcards-loops.html">🎲 Wildcards, Sweeps &amp; Loops</a>
+  <a href="video-frames.html">🎞️ Video Frames &amp; Dialog</a>
+  <a href="walkthrough-actor-sheet.html">🎭 Walkthrough: Actor Sheet</a>
+  <a href="tim-edition.html" class="current">🔧 Tim Edition Changes</a>
+  <div class="sep"></div>
+  <a href="../index.html">✏️ Back to the Editor</a>
+  <a href="https://github.com/timbocf/Storyflow-Tim-Edition">💻 GitHub Repo</a>
+</nav>
+<main>
+<div class="crumb">Docs › Tim Edition Changes</div>
+<h1>Tim Edition Changes</h1>
+<p class="lede">This fork starts from wetcircuit's Storyflow 261101 (November 2026) and fixes bugs found by reading the code closely. Every change is marked in the source with a <code>[Tim edition fix]</code> comment next to the changed lines, so the differences are easy to find, review, or revert. The full log is <a href="https://github.com/timbocf/Storyflow-Tim-Edition/blob/main/CHANGELOG_tim.md">CHANGELOG_tim.md</a> in the repo.</p>
+
+<h2>Fixed</h2>
+<table>
+<tr><th>#</th><th>Fix</th><th>What was wrong</th></tr>
+<tr><td>1</td><td><strong>H3 frames export</strong> (Editor)</td><td>The MiniMax H3 frames slider displayed values on the H3 rule (steps of 17, offset 5) but the exporter applied the Wan/LTX "+1" shortcut to all three frame types — a badge reading 22 exported 18. Export now matches the badge for all three types. Verified against all 181 slider positions, including save/load round-trips: the original mismatched on 21 positions (every H3 stop past the first); the fixed code mismatches on none.</td></tr>
+<tr><td>2</td><td><strong>Preflight hard stop</strong> (Pipeline)</td><td>When preflight found problems (bad JSON, unknown instructions, wrong types, bad file paths), the script showed a "🚫 Pipeline will fail" screen but kept executing if that screen was confirmed instead of cancelled — running a job it had just declared invalid. Now any collected warning stops the script with an error after that screen. Fix in the Editor, re-export, relaunch.</td></tr>
+<tr><td>3</td><td><strong>Get Prompt appends</strong> (Pipeline)</td><td>The instruction's own comment said "concatenate prompt," but the code <em>replaced</em> the whole concat bucket with Draw Things' UI prompt, silently throwing away text built up by earlier Concat/Wildcard/Interrogate items. It now appends, like the other bucket-building instructions.</td></tr>
+<tr><td>4</td><td><strong>Export to Clipboard on iPad</strong> (Editor)</td><td>The original was a single clipboard call with no error handling and no feedback. On iPad that API only exists in secure contexts (https — not local files or in-app previews) and fails silently when blocked, so the button appeared dead. The button now tries three routes in order — modern Clipboard API, legacy select-and-copy, and a manual-copy popup with the text pre-selected — and reports the result on the button itself. (Running the Editor from this site's https address also gives the modern route its best shot.) Side discovery: the Editor also calls a toast-notification function that is never defined anywhere in the file, so it had no working feedback mechanism at all.</td></tr>
+<tr><td>5</td><td><strong>This documentation</strong>, linked from the Editor header</td><td>The original's only in-tool help was placeholder text inside empty fields, plus a separate <code>.txt</code> doc most users would never find. This wiki covers the whole system.</td></tr>
+</table>
+
+<h2>Known issues — not yet fixed</h2>
+<ul>
+<li><strong>Preview totals skip H3.</strong> The Editor Preview's running-time totals count only Wan and LTX frames, and its per-item seconds for H3 use (frames − 1) ÷ 24 while the item badge uses frames ÷ 24. Cosmetic, but Preview still isn't a fully true picture of the export (it also doesn't expand <code>$</code> wildcards or <code>#</code> config shortcuts).</li>
+<li><strong>Mask seam.</strong> Masks loaded from file go into Draw Things' mask layer but never set the Pipeline's internal mask variable, while rendering and Mask to Canvas only consult that variable — and Clear Mask clears only the variable, not a file-loaded layer mask. Depending on order, you can keep a mask you thought was gone, or lose one you expected.</li>
+<li><strong>Frames-by-Dialog timing on Wan.</strong> The dialog frame math special-cases only H3; everything else gets the LTX rule (25 fps, step 8), so dialog clips on Wan models (16 fps, step 4) run long.</li>
+<li><strong>Fragile answer-model selection.</strong> The Pipeline finds the answer-model popup by counting how many sections the preflight menu has. Add or remove a section in a future edit and it will silently read the wrong slot.</li>
+<li><strong>Editor creature comforts.</strong> Still no duplicate-item button, no undo, no autosave, and no Editor-side JSON validation for Config/Pose items (bad JSON is only caught at preflight, over in Draw Things).</li>
+<li><strong>Naming collisions</strong> (unchanged from the original): <code>#</code> means config shortcuts in Config items and pose shortcuts in Pose items, and "wildcard" names both the export-time <code>$</code> system and the runtime Wildcard instruction.</li>
+</ul>
+
+<h2>Validation approach</h2>
+<p>Fixes are checked before they ship here: both files pass a JavaScript syntax check, a diff against the original 261101 files confirms only the intended changes were made, and logic that can run outside Draw Things (like the frames math) is exercised with a small harness over every input position. What can't be checked off-device is an actual run inside Draw Things — if a fix misbehaves there, the original files remain available from wetcircuit's site and in the repo history.</p>
+
+<div class="seealso"><strong>See also:</strong> <a href="https://github.com/timbocf/Storyflow-Tim-Edition">GitHub repo</a> · <a href="index.html">Docs Home</a></div>
+</main>
+</div>
+</body>
+</html>

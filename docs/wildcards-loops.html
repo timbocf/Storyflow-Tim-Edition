@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wildcards, Sweeps &amp; Loops — Storyflow Tim Edition Docs</title>
+<link rel="stylesheet" href="docs.css">
+</head>
+<body>
+<div class="layout">
+<nav class="sidebar">
+  <h2>Storyflow Docs</h2>
+  <div class="sub">Tim Edition · based on Storyflow 261101 by wetcircuit</div>
+  <a href="index.html">📚 Docs Home</a>
+  <a href="how-it-works.html">⚙️ How It Works</a>
+  <a href="editor-guide.html">🧱 Editor Guide</a>
+  <a href="instructions.html">📋 Instruction Reference</a>
+  <a href="wildcards-loops.html" class="current">🎲 Wildcards, Sweeps &amp; Loops</a>
+  <a href="video-frames.html">🎞️ Video Frames &amp; Dialog</a>
+  <a href="walkthrough-actor-sheet.html">🎭 Walkthrough: Actor Sheet</a>
+  <a href="tim-edition.html">🔧 Tim Edition Changes</a>
+  <div class="sep"></div>
+  <a href="../index.html">✏️ Back to the Editor</a>
+  <a href="https://github.com/timbocf/Storyflow-Tim-Edition">💻 GitHub Repo</a>
+</nav>
+<main>
+<div class="crumb">Docs › Wildcards, Sweeps &amp; Loops</div>
+<h1>Wildcards, Sweeps &amp; Loops</h1>
+<p class="lede">These are Storyflow's variety machines. A <strong>Wildcard</strong> picks prompt text from a list of cards. A <strong>Sweep</strong> does the same thing to a Draw Things setting. A <strong>Loop</strong> repeats a block of instructions so the picking actually gets used. All three are usually found together.</p>
+
+<div class="warn"><strong>Don't confuse the two "wildcards":</strong> the <code>$name</code> wildcards in the Editor's Wildcards tab are picked <em>once, at export time</em>, and the exported text is fixed. The <strong>Wildcard instruction</strong> on this page is picked <em>at runtime, inside Draw Things</em>, every time the run reaches it. Same word, different machine.</div>
+
+<h2>The six picking modes</h2>
+<p>Wildcard and Sweep share the same six modes. Each individual Wildcard/Sweep item keeps its own place in its own list — two items never share a counter (except in loop mode, below).</p>
+<table>
+<tr><th>Mode</th><th>How it picks</th><th>Good for</th></tr>
+<tr><td><strong>loop</strong></td><td>Steps through the cards in order, wrapping to the start. It advances with the <em>loop counter</em>, not with how many times the item is hit — so two Wildcards on loop mode stay in step with each other, and hitting the same one twice in one pass gives the same card twice. A Wildcard on loop mode outside any loop always gives card 1.</td><td>Matched sets: outfit #3 with pose #3 with background #3.</td></tr>
+<tr><td><strong>once</strong></td><td>Steps through in order with its own counter, but stops on the last card and keeps giving that one forever.</td><td>Progressions that settle: a ramp that ends at a final value.</td></tr>
+<tr><td><strong>shuffle</strong></td><td>Deals the cards in random order like a deck — every card appears once before any repeats — then reshuffles.</td><td>The best default for variety without repeats. The sample projects lean on it heavily.</td></tr>
+<tr><td><strong>random</strong></td><td>A fresh random pick every hit. Repeats can happen, even back to back.</td><td>Chaos, brainstorming, big lists where repeats don't matter.</td></tr>
+<tr><td><strong>menu</strong></td><td>Pauses the run and lets <em>you</em> pick from a popup, every time it's hit.</td><td>Steering a run by hand.</td></tr>
+<tr><td><strong>combobox</strong></td><td>Like menu, but the popup also lets you type your own text instead of picking.</td><td>Picking with an escape hatch.</td></tr>
+</table>
+<div class="note"><strong>Menu/combobox inside a loop:</strong> they ask <em>every pass</em>. A 50-pass loop with one menu Wildcard means 50 popups. That's a feature if you're supervising, and a trap if you're not.</div>
+
+<h2>Sweep specifics</h2>
+<p>A Sweep names one setting (<code>paramName</code>, e.g. <code>steps</code> or <code>stochasticSamplingGamma</code>) and a list of value cards. Each hit sets that one setting to the picked card; the setting stays changed until something else changes it. Card values are interpreted by content:</p>
+<ul>
+<li>Written as JSON (a list in <code>[...]</code>, an object in <code>{...}</code>) → parsed as JSON. This is how a Sweep can rotate LoRA stacks or model names.</li>
+<li>A plain number → becomes a number.</li>
+<li>Anything else → stays text.</li>
+</ul>
+<div class="warn"><strong>No safety net:</strong> Sweep values are not checked against any range. The original doc says this plainly — you can set values outside safe limits and Draw Things will try to use them. Double-check spelling too: a mistyped <code>paramName</code> just sets a setting that doesn't exist, silently.</div>
+
+<h2>Loops</h2>
+<p>A <strong>Loop</strong> item and an <strong>End Loop</strong> item bracket a block of instructions. The block repeats <strong>Loop Count</strong> times. <strong>Start Index</strong> sets the number used for the first saved file. Rules:</p>
+<ul>
+<li><strong>No nesting.</strong> One loop at a time — a Loop inside a Loop doesn't work. Several loops one after another in the same project are fine.</li>
+<li>The loop has its own counter, which is also what drives loop-mode Wildcards/Sweeps and the incremental file instructions below.</li>
+<li>A typical loop body: build a prompt (Concat + Wildcards) → Prompt → Save Image ⓘ. Each pass produces one variation, saved automatically.</li>
+</ul>
+
+<h2>Incremental files (the ⓘ instructions)</h2>
+<p>Four instructions only make sense inside a loop. They advance in step with the loop counter:</p>
+<table>
+<tr><th>Instruction</th><th>What advances</th></tr>
+<tr><td><strong>Load Image ⓘ</strong></td><td>Each pass loads the next image from a Pictures folder onto the canvas.</td></tr>
+<tr><td><strong>Load ⓘ Mask</strong></td><td>Each pass loads the next mask from a folder — pair with Load Image ⓘ (same sorting) to batch-process a folder of images with matching masks.</td></tr>
+<tr><td><strong>Add ⓘ MB</strong></td><td>Each pass adds the next image from a folder to the moodboard.</td></tr>
+<tr><td><strong>Save Image ⓘ</strong></td><td>Each pass saves the canvas as <code>name_001.png</code>, <code>name_002.png</code>, … counting up from Start Index (three-digit numbering).</td></tr>
+</table>
+<p><strong>Folder sorting:</strong> files are ordered by a leading number before the first underscore if they have one (<code>2_b.png</code> comes before <code>10_a.png</code>), otherwise alphabetically. If the loop runs more passes than there are files, the sequence <strong>cycles</strong> back to the first file.</p>
+
+<h2>A minimal variety loop, read aloud</h2>
+<pre><code>Loop {count: 8, start: 1}
+  Concat     "a portrait of a woman, wearing "
+  Wildcard   (shuffle) cards: "a red coat" | "a denim jacket" | "a black gown"
+  Concat     ", standing in "
+  Wildcard   (shuffle) cards: "a forest" | "a city street" | "a desert"
+  Prompt     ", golden hour light"
+  Save Image ⓘ  "portraits/look"
+End Loop</code></pre>
+<p>Eight passes, eight renders, each with a different outfit/place pairing (shuffle means no outfit repeats until all three are used), saved as <code>look_001.png</code> through <code>look_008.png</code>. Swap one Wildcard to <em>loop</em> mode and the pairings lock into matched rotation instead.</p>
+
+<div class="seealso"><strong>See also:</strong> <a href="instructions.html">Instruction Reference</a> · <a href="walkthrough-actor-sheet.html">Walkthrough: Actor Sheet</a> (the CharacterSheet sample is this pattern, bigger)</div>
+</main>
+</div>
+</body>
+</html>

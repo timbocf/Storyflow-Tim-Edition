@@ -1,0 +1,47 @@
+/* Storyflow Tim Edition — documentation wiki styles */
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: #1c2330;
+  background: #f6f7f9;
+  line-height: 1.55;
+}
+.layout { display: flex; min-height: 100vh; }
+.sidebar {
+  width: 250px; flex: 0 0 250px;
+  background: #20242e; color: #cfd6e4;
+  padding: 18px 14px; position: sticky; top: 0; height: 100vh; overflow-y: auto;
+}
+.sidebar h2 { font-size: 1.05rem; margin: 0 0 2px; color: #fff; }
+.sidebar .sub { font-size: 0.8rem; color: #8d97ab; margin-bottom: 14px; }
+.sidebar a {
+  display: block; color: #cfd6e4; text-decoration: none;
+  padding: 6px 9px; border-radius: 6px; font-size: 0.93rem; margin-bottom: 2px;
+}
+.sidebar a:hover { background: #2c313e; color: #fff; }
+.sidebar a.current { background: #3b5bdb; color: #fff; }
+.sidebar .sep { border-top: 1px solid #343a48; margin: 12px 4px; }
+main { flex: 1; max-width: 880px; padding: 28px 34px 60px; background: #fff; }
+h1 { font-size: 1.7rem; margin: 0 0 6px; }
+h2 { font-size: 1.25rem; margin-top: 30px; border-bottom: 2px solid #e3e6ec; padding-bottom: 4px; }
+h3 { font-size: 1.05rem; margin-top: 22px; }
+.lede { font-size: 1.05rem; color: #3c4657; }
+code { background: #eef0f4; padding: 1px 5px; border-radius: 4px; font-size: 0.92em; }
+pre { background: #20242e; color: #e8ecf4; padding: 12px 14px; border-radius: 8px; overflow-x: auto; font-size: 0.88rem; }
+pre code { background: none; padding: 0; color: inherit; }
+table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 0.94rem; }
+th, td { border: 1px solid #d8dce4; padding: 6px 9px; text-align: left; vertical-align: top; }
+th { background: #eef0f4; }
+td:first-child { white-space: nowrap; font-weight: 600; }
+.note, .warn, .tip { border-radius: 8px; padding: 10px 14px; margin: 14px 0; font-size: 0.95rem; }
+.note { background: #eef4ff; border-left: 4px solid #3b5bdb; }
+.warn { background: #fff4e5; border-left: 4px solid #e8890c; }
+.tip  { background: #e9f9ee; border-left: 4px solid #2b9e57; }
+.seealso { margin-top: 36px; padding-top: 12px; border-top: 2px solid #e3e6ec; font-size: 0.95rem; }
+.crumb { font-size: 0.85rem; color: #69738a; margin-bottom: 10px; }
+@media (max-width: 760px) {
+  .layout { flex-direction: column; }
+  .sidebar { width: 100%; flex: none; height: auto; position: static; }
+  main { padding: 20px 16px 48px; }
+}

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Instruction Reference — Storyflow Tim Edition Docs</title>
+<link rel="stylesheet" href="docs.css">
+</head>
+<body>
+<div class="layout">
+<nav class="sidebar">
+  <h2>Storyflow Docs</h2>
+  <div class="sub">Tim Edition · based on Storyflow 261101 by wetcircuit</div>
+  <a href="index.html">📚 Docs Home</a>
+  <a href="how-it-works.html">⚙️ How It Works</a>
+  <a href="editor-guide.html">🧱 Editor Guide</a>
+  <a href="instructions.html" class="current">📋 Instruction Reference</a>
+  <a href="wildcards-loops.html">🎲 Wildcards, Sweeps &amp; Loops</a>
+  <a href="video-frames.html">🎞️ Video Frames &amp; Dialog</a>
+  <a href="walkthrough-actor-sheet.html">🎭 Walkthrough: Actor Sheet</a>
+  <a href="tim-edition.html">🔧 Tim Edition Changes</a>
+  <div class="sep"></div>
+  <a href="../index.html">✏️ Back to the Editor</a>
+  <a href="https://github.com/timbocf/Storyflow-Tim-Edition">💻 GitHub Repo</a>
+</nav>
+<main>
+<div class="crumb">Docs › Instruction Reference</div>
+<h1>Instruction Reference</h1>
+<p class="lede">Every instruction the Editor can add, grouped the same way as the tray. Instructions run top to bottom; most only prepare — a <strong>Prompt</strong> instruction is what renders. Terms used below: the <em>bucket</em> is the concat text being built up; the <em>answer model</em> is the vision model chosen at preflight (see <a href="how-it-works.html">How It Works</a>).</p>
+
+<h2>Prompts</h2>
+<table>
+<tr><th>Instruction</th><th>What it does</th></tr>
+<tr><td>Prompt</td><td><strong>Renders.</strong> Final prompt = everything in the bucket + this item's own text. Empties the bucket afterward, ready for the next render.</td></tr>
+<tr><td>Concat</td><td>Adds its text to the bucket. For building one long prompt out of labeled sections: subject in one Concat, clothes in the next, style in the next.</td></tr>
+<tr><td>Wildcard</td><td>Adds one card from its list to the bucket, picked at runtime by its mode. See <a href="wildcards-loops.html">Wildcards, Sweeps &amp; Loops</a>.</td></tr>
+<tr><td>Interrogate</td><td>Sends the current canvas image to the answer model with your text as the question ("Describe this actor: gender, age, hair…") and adds the answer to the bucket. The photo-to-description step in the <a href="walkthrough-actor-sheet.html">actor sheet walkthrough</a>.</td></tr>
+<tr><td>Enhance</td><td>Sends your instruction text <em>plus the current bucket</em> to the answer model as a rewrite job ("turn this into a detailed image prompt…"). The answer <strong>replaces</strong> the bucket. Pair with Prefix afterward to bolt your style words back on.</td></tr>
+<tr><td>Prefix</td><td>Sticks its text onto the <em>front</em> of the bucket. Made for after Enhance — LoRA trigger words and style terms go first.</td></tr>
+<tr><td>Get Prompt</td><td>Copies the prompt text currently sitting in Draw Things' own prompt box into the bucket. Tim Edition: it <em>adds</em> to the bucket (the original silently replaced the bucket — fixed, see <a href="tim-edition.html">Tim Edition Changes</a>).</td></tr>
+<tr><td>Negative</td><td>Sets the negative prompt from this point on. It sticks for the rest of the run until another Negative changes it.</td></tr>
+</table>
+
+<h2>Img / Vid</h2>
+<table>
+<tr><th>Instruction</th><th>What it does</th></tr>
+<tr><td>Clear Image</td><td>Clears the canvas and control layers. Moodboard and mask survive.</td></tr>
+<tr><td>Save Full</td><td>Saves the whole canvas as a PNG into your Pictures folder (path you type, e.g. <code>myProject/image.png</code>). Save paths must end in <code>.png</code>, the folder must already exist, and an existing file with the same name is overwritten without asking.</td></tr>
+<tr><td>Save Area</td><td>Like Save Full, but saves only the visible render area instead of the whole canvas.</td></tr>
+<tr><td>Load</td><td>Loads a PNG/JPG/WebP from Pictures onto the canvas, clearing it and scaling the image to the current render size.</td></tr>
+<tr><td>Swap</td><td><strong>Pauses the run.</strong> Pops up an image picker so you choose or replace the canvas image by hand; an "ignore swap" switch keeps what's already there.</td></tr>
+<tr><td>Frames — Wan</td><td>Sets the frame count for the next video render: steps of 4+1 (1, 5, 9 … 128) at 16 fps.</td></tr>
+<tr><td>Frames — LTX</td><td>Steps of 8+1 (1, 9, 17 … ~1000) at 25 fps.</td></tr>
+<tr><td>Frames — H3</td><td>MiniMax H3: steps of 17 with an offset of 5 (5, 22, 39 …) at 24 fps; slider at 0 means 1 frame. Details on the <a href="video-frames.html">Video Frames</a> page.</td></tr>
+<tr><td>Frames by Dialog 💬</td><td>Counts the words inside "quotation marks" in the bucket and sets the frame count from a speaking pace. Tick its <strong>Generate</strong> box and it also renders immediately using the bucket as the prompt, so no Prompt item is needed. Full rules on the <a href="video-frames.html">Video Frames</a> page.</td></tr>
+</table>
+
+<h2>Config</h2>
+<table>
+<tr><th>Instruction</th><th>What it does</th></tr>
+<tr><td>Config</td><td>The power tool. Paste any chunk of a Draw Things settings JSON — full or partial. Those settings are merged in and apply from the next render onward. This is where model choice, LoRA stacks, sampler, and steps live. A Config item can also be just a <code>#shortcut</code> (see <a href="editor-guide.html">Editor Guide</a>). Unlike Size, Config does <em>not</em> resize the canvas by itself.</td></tr>
+<tr><td>Size</td><td>Friendly width/height fields (rounded to multiples of 64, minimum 128). Resizes the canvas <em>immediately</em>.</td></tr>
+<tr><td>Size x2</td><td>Doubles width and height, keeping the current visible image pasted in — stage one of an upscale: double the canvas, then let an upscale model re-render into it.</td></tr>
+<tr><td>Sweep</td><td>The settings cousin of Wildcard: names one setting (e.g. <code>steps</code>) and steps it through a list of values, one per hit, by mode. No range checking at all — values are trusted completely. See <a href="wildcards-loops.html">Wildcards, Sweeps &amp; Loops</a>.</td></tr>
+<tr><td>High-res Fix</td><td>A friendly form for the four hires-fix settings (on/off, width, height, strength) instead of raw Config JSON.</td></tr>
+<tr><td>In-paint Tools</td><td>A friendly form for inpaint settings: strength, mask blur, mask blur outset, and the keep-original-after-inpaint switch.</td></tr>
+<tr><td>XL Magic</td><td>SDXL only. Three numbers 1–8 (Original / Target / Negative) that pick a matched set of latent sizes from a fixed table (256×192 up to 2048×1536). SDXL renders sharper when those three sizes follow a matched pattern; this picks the pattern without typing six numbers. Low values can suit hand-drawn styles; a low-to-high spread suits photos. Ignore it for Flux/Krea/Qwen models.</td></tr>
+</table>
+
+<h2>Canvas</h2>
+<table>
+<tr><th>Instruction</th><th>What it does</th></tr>
+<tr><td>Face Zoom</td><td>Runs Draw Things' face detection; if it finds a face smaller than about 65% of the canvas height, it zooms and re-centers the view on it (moving the render area, which is how the next render becomes a close-up). Falls back to a mild 1.2 zoom near the top-left if detection fails or the face is already big. Only the first face counts.</td></tr>
+<tr><td>Ask Zoom</td><td>The same zoom, but the answer model finds a named thing ("a hat") and returns a box around it. Useful for objects Face Zoom can't detect.</td></tr>
+<tr><td>Move Scale</td><td>Sets the canvas view position (X, Y) and zoom (Scale) directly. The multi-panel mover: paired with Matte, this slides a big canvas around under a fixed render window.</td></tr>
+<tr><td>Adapt Size</td><td>Resizes the canvas to fit the image currently on it, capped at your Max Width / Max Height, snapped to multiples of 64, view recentered. For normalizing odd-sized loaded photos before working on them.</td></tr>
+<tr><td>Matte</td><td>Fills the canvas with a solid color foundation layer (black, white, red, green, blue, yellow, cyan, magenta). Used under Move Scale for panel layouts.</td></tr>
+<tr><td>Crop Image</td><td>Trims the image down to the visible render area and reloads it as the whole canvas.</td></tr>
+<tr><td>Remove BKGD</td><td>Uses Draw Things' background detection to make the background transparent (shows as flat grey on canvas; exports as transparency when saved as PNG).</td></tr>
+</table>
+
+<h2>Moodboard</h2>
+<p>The moodboard is Draw Things' reference-image board — edit-style models look at these images as visual references.</p>
+<table>
+<tr><th>Instruction</th><th>What it does</th></tr>
+<tr><td>Clear Moodboard</td><td>Empties the board.</td></tr>
+<tr><td>Canvas to MB</td><td>Copies the visible canvas onto the board as a reference.</td></tr>
+<tr><td>Add MB</td><td>Loads an image file from Pictures onto the board.</td></tr>
+<tr><td>Remove MB</td><td>Removes a board image by index number (indexes start at 0).</td></tr>
+<tr><td>MB Weights</td><td>A weight 0–1 for each board slot (slots 0–7). Per the original doc, modern edit models treat any weight above 0 as "use it" and 0 as "ignore it"; older models are more sensitive to the exact value.</td></tr>
+<tr><td>Add ⓘ MB</td><td>Loop-only: each loop pass takes the <em>next</em> image from a Pictures folder and adds it to the board. Cycles back to the start if the loop outlasts the folder.</td></tr>
+</table>
+
+<h2>Mask</h2>
+<p>The mask is the black/white "only repaint here" layer used for inpainting. Once set, it is handed to every render until cleared.</p>
+<table>
+<tr><th>Instruction</th><th>What it does</th></tr>
+<tr><td>Clear Mask</td><td>Clears the Pipeline's mask. (Known seam: it does not clear a mask that was loaded into Draw Things' own mask layer from a file — see <a href="tim-edition.html">known issues</a>.)</td></tr>
+<tr><td>Load Mask</td><td>Loads a mask image from Pictures into Draw Things' mask layer.</td></tr>
+<tr><td>Foreground / Background Mask</td><td>Auto-detects that part of the image and makes it the mask.</td></tr>
+<tr><td>Body Mask</td><td>Builds a mask from body-part checkboxes (upper body / lower body / clothes / neck) plus an "extra" grow-by-pixels amount. The clothing-swap-and-inpaint workflow. If detection fails, the mask ends up empty.</td></tr>
+<tr><td>Load ⓘ Mask</td><td>Loop-only: next mask file from a folder each pass — kept in step with Load ⓘ Image for batch processing a folder with matching masks.</td></tr>
+</table>
+
+<h2>Layers</h2>
+<p>Draw Things keeps extra layers alongside the canvas: a depth layer and a pose layer.</p>
+<table>
+<tr><th>Instruction</th><th>What it does</th></tr>
+<tr><td>Extract Depth</td><td>Creates a real depth map from the canvas image into the depth layer.</td></tr>
+<tr><td>Canvas to Depth</td><td>Copies the canvas picture into the depth layer as-is (no extraction).</td></tr>
+<tr><td>Depth to Canvas</td><td>Copies the depth layer back onto the canvas.</td></tr>
+<tr><td>Mask to Canvas</td><td>Copies the mask onto the canvas so you can see or save it as a normal image. Only works for masks the Pipeline made itself this run (Foreground/Background/Body/Ask), not file-loaded masks.</td></tr>
+<tr><td>JSON Pose</td><td>Loads an OpenPose skeleton (joint-coordinates JSON, copied out of Draw Things' pose layer, or a <code>#pose</code> shortcut) as the pose control. Sticking point: the pose's recorded width/height must match your render size.</td></tr>
+</table>
+
+<h2>Loop &amp; Flow</h2>
+<table>
+<tr><th>Instruction</th><th>What it does</th></tr>
+<tr><td>Note</td><td>A comment for humans. Exported, but the Pipeline ignores it. Put your project explanation in the first Note — the sample projects all do.</td></tr>
+<tr><td>Approve</td><td><strong>Pauses the run.</strong> Shows the current bucket in an editable text box; whatever you leave in the box is the bucket going forward. Belongs after an Interrogate or Enhance.</td></tr>
+<tr><td>Add Pipeline</td><td>Embeds another exported <code>.txt</code> instruction file as one item; at export, its instructions are spliced in seamlessly — for reusable chunks like a standard canvas-prep routine. Browser safety catch: after saving and reloading a project, you must click each Add Pipeline item and re-pick its file, or the export carries a warning instead of the instructions.</td></tr>
+<tr><td>Loop / End Loop</td><td>Everything between them repeats Loop Count times. Start Index sets the number the first saved file gets. Loops cannot nest, but several separate loops in a row are fine. See <a href="wildcards-loops.html">Wildcards, Sweeps &amp; Loops</a>.</td></tr>
+<tr><td>Load Image ⓘ</td><td>Loop-only: each pass loads the next image from a Pictures folder. Files sort by a leading number before an underscore (<code>12_photo.png</code>) if present, otherwise alphabetically; the sequence cycles if the loop outlasts the folder.</td></tr>
+<tr><td>Save Image ⓘ</td><td>Loop-only: saves each pass as <code>name_001.png</code>, <code>name_002.png</code>, … counting from Start Index.</td></tr>
+</table>
+
+<h2>Instructions with no Editor button</h2>
+<p>Three instructions exist in the Pipeline but can't be added from the Editor — they're leftovers or hand-edit-only features. You'd only meet them in a hand-written export:</p>
+<table>
+<tr><th>Instruction</th><th>What it does</th></tr>
+<tr><td>Ask Mask</td><td>Asks the answer model for a rectangle and fills it white as the mask. An empty mask results if the model's answer can't be parsed.</td></tr>
+<tr><td>Extract Pose</td><td>Extracts a pose from the canvas image into the pose layer.</td></tr>
+<tr><td>Moodboard Load (legacy)</td><td>Older version of Canvas to MB that also clears the canvas afterward. Replaced by Canvas to MB — don't confuse the two.</td></tr>
+</table>
+
+<div class="seealso"><strong>See also:</strong> <a href="wildcards-loops.html">Wildcards, Sweeps &amp; Loops</a> · <a href="video-frames.html">Video Frames &amp; Dialog</a> · <a href="editor-guide.html">Editor Guide</a></div>
+</main>
+</div>
+</body>
+</html>
