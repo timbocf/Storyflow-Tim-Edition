@@ -58,6 +58,8 @@ These two files are Tim's own copies to modify:
 
 Validated with a real DOM test (jsdom): 21/21 checks — boot, help coverage for all 55 types, duplicate/delete/undo chains, validation flagging + export block + unflagging, Preview resolution, autosave write + restore — plus all three sample projects load and export cleanly (each ending in {"end": true}).
 
+17. **Export to Clipboard — second hardening (Nov 12, 2026, after Tim reported it still failing on his iPad).** The first fix awaited the Clipboard API first and only then fell back; on iPad Safari, copy permission is tied to the tap, and that wait could let it lapse — the API failed late and nothing visibly happened. The routes are reordered: the synchronous select-and-copy now runs first, inside the tap; the Clipboard API is second (and is now attempted whenever it exists and the context isn't a definite non-secure one — some webviews leave `isSecureContext` undefined); the manual popup is last and now has its own "📋 Select & Copy" button (a fresh tap = a fresh copy gesture) and an editable text box, since some iPad Safari versions won't offer the Copy callout on a readonly field. The deployed Pages build was also function-tested in a browser (button correctly reported "✅ Copied!"), so this targets the iPad-specific path specifically. DOM harness: all three routes verified (sync success; API success; API rejection → popup; popup button success).
+
 Every fix is marked in the code with a `[Tim edition fix]` comment next to the changed lines, so the changes are easy to find, review, or revert.
 
 ## Validation done
