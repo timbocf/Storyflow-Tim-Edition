@@ -300,6 +300,13 @@ body[data-theme="cyberpunk"] {
           flex: 1;
         }
 
+/* [Tim edition] item help text, duplicate button, JSON validation flag */
+.item-help-text { font-size: 0.72rem; font-weight: 400; opacity: 0.75; max-width: 150px; line-height: 1.25; margin-top: 2px; }
+.item.invalid-json { outline: 2px solid #d60000; outline-offset: 1px; }
+.json-flag { display: none; color: #d60000; font-size: 0.72rem; font-weight: 700; margin-top: 2px; }
+.item.invalid-json .json-flag { display: block; }
+.dup-btn { background: none; border: none; cursor: pointer; font-size: 0.95rem; padding: 2px 4px; }
+
 /* Explicit class for standard textareas */
 .standard-textarea {
   border: 1px solid var(--input-border);
@@ -1086,6 +1093,7 @@ textarea::placeholder {
     <button class="btn-project" onclick="newProject()">🆕 New Project</button>
     <button class="btn-saveProject" onclick="saveProject()">💾 Save Project</button>
     <button class="btn-project" onclick="loadProject()">📂 Load Project</button>
+    <button class="btn-project" id="undoBtn" onclick="undoLast()" title="Undo the last list change (add, delete, duplicate, reorder, load, new)">↩️ Undo</button>
     <button class="btn-project" onclick="exportTextfile()">⬇️ Export to Pipeline</button>
     <button class="btn-project" onclick="exportClipboard(this)">📋 Export to Clipboard</button>
 </div>
@@ -1378,6 +1386,71 @@ function parseJSONSafely(str, fallback) {
 /* ===========================
    Configuration Schema
    =========================== */
+/* ===========================
+   [Tim edition] One-line help per item type
+   Shown under the type label on every item — the original Editor's only
+   help was placeholder text inside empty fields.
+   =========================== */
+const ITEM_HELP = {
+    prompt: "Renders. Final prompt = concat bucket + this text; bucket empties after.",
+    concat: "Adds its text to the concat bucket being built for the next Prompt.",
+    prefix: "Sticks its text onto the FRONT of the bucket (use after Enhance).",
+    interrogate: "Asks the answer model about the canvas image; answer joins the bucket.",
+    enhance: "Answer model rewrites the bucket using this text as its instructions. Answer REPLACES the bucket.",
+    negPrompt: "Sets the negative prompt from here on (sticks until changed).",
+    note: "Comment for humans. Exported but ignored by the Pipeline.",
+    config: "Merges Draw Things settings JSON (or one #shortcut) from the next render on. Does not resize the canvas.",
+    approve: "Pauses the run: shows the bucket in an editable box. What you leave there is the bucket going forward.",
+    swapCanvas: "Pauses the run so you can pick/replace the canvas image by hand.",
+    canvasClear: "Clears the canvas and control layers. Moodboard and mask survive.",
+    moodboardClear: "Empties the moodboard (reference images).",
+    moodboardCanvas: "Copies the visible canvas onto the moodboard as a reference.",
+    moodboardLoad: "Legacy: like Canvas to MB but also clears the canvas afterward.",
+    removeBkgd: "Makes the detected background transparent (exports as PNG transparency).",
+    crop: "Trims the image to the visible render area and reloads it as the whole canvas.",
+    faceZoom: "Zooms the view onto the first detected face (if it's small in frame).",
+    askZoom: "Answer model finds the named thing and zooms the view onto it.",
+    maskGet: "Copies the current mask onto the canvas so you can see/save it.",
+    maskClear: "Clears the Pipeline's mask state.",
+    maskBkgd: "Sets the mask to the detected background.",
+    maskFG: "Sets the mask to the detected foreground.",
+    maskBody: "Builds a mask from body parts (upper/lower/clothes/neck) + grow pixels.",
+    maskLoad: "Loads a mask image from Pictures.",
+    maskAsk: "Answer model finds the named thing; its box becomes the mask.",
+    depthToCanvas: "Copies the depth layer back onto the canvas.",
+    depthCanvas: "Copies the canvas picture into the depth layer as-is.",
+    depthExtract: "Creates a real depth map from the canvas into the depth layer.",
+    poseJSON: "Loads an OpenPose skeleton (JSON or #pose shortcut) as pose control. Pose size must match render size.",
+    sizex2: "Doubles canvas W/H keeping the visible image — stage one of an upscale.",
+    getPrompt: "Adds the prompt currently in Draw Things' own prompt box to the bucket.",
+    loopEnd: "Ends a Loop block: repeats it or moves on.",
+    moveScale: "Sets the canvas view position (X, Y) and zoom (Scale) directly.",
+    adaptSize: "Resizes the canvas to fit the current image, capped at Max W/H, snapped to 64.",
+    loop: "Repeats everything until End Loop this many times. Start = first saved-file number. Loops can't nest.",
+    xlMagic: "SDXL only: picks a matched latent size set (Original/Target/Negative, each 1–8).",
+    moodboardWeights: "Weight 0–1 per moodboard slot. Modern edit models: >0 = use it, 0 = ignore.",
+    size: "Sets canvas width/height (multiples of 64) and resizes immediately.",
+    inpaintTools: "Inpaint settings: strength, mask blur, blur outset, keep-original switch.",
+    wildcard: "Adds one card from its list to the bucket, picked at runtime by its mode.",
+    sweep: "Steps ONE named setting through its value cards by mode. No range checking — values are trusted.",
+    framesDialog: "Sets frame count from words inside \"quotes\" in the bucket at a speaking pace. Generate = also renders now.",
+    hrf: "High-res fix settings: on/off, width, height, strength.",
+    matte: "Fills the canvas with a solid color foundation layer (for panel layouts with Move Scale).",
+    frames: "Wan video frames: steps of 4+1, 16 fps, max 128.",
+    frames8: "LTX video frames: steps of 8+1, 25 fps.",
+    frames17: "MiniMax H3 video frames: steps of 17, offset 5, 24 fps. Slider at 0 = 1 frame.",
+    moodboardRemove: "Removes a moodboard image by index (starts at 0).",
+    canvasSave: "Saves the WHOLE canvas as PNG to Pictures (folder must exist; overwrites same-name).",
+    canvasSaveArea: "Saves only the visible render area as PNG to Pictures.",
+    canvasLoad: "Loads an image from Pictures onto the canvas (clears + scales to render size).",
+    moodboardAdd: "Loads an image from Pictures onto the moodboard.",
+    loopAddMB: "Loop only: each pass adds the NEXT image from this folder to the moodboard.",
+    loopLoad: "Loop only: each pass loads the NEXT image from this folder.",
+    loopLoadMask: "Loop only: each pass loads the NEXT mask from this folder (pairs with Load Image).",
+    loopSave: "Loop only: saves each pass as name_001.png, name_002.png, … from Start Index.",
+    fileLoad: "Embeds another exported .txt's instructions at export. Re-pick the file after reloading a project.",
+};
+
 const ITEM_CONFIGS = {
     // Standard Text Fields
     prompt:           { default: "", placeholder: "Prompt will concat and generate \nEditor triggers, Editor wildcards: @hero at $location" },
@@ -1947,6 +2020,19 @@ dragHandle.addEventListener("touchend", handleTouchEnd, { passive: false });
     typeLabel.textContent = formatTypeLabel(itemObj.type);
     container.appendChild(typeLabel);
 
+    // [Tim edition] one-line help under the type label, plus a hidden
+    // "invalid JSON" flag that validation (in updatePreview) switches on.
+    if (ITEM_HELP[itemObj.type]) {
+        const help = document.createElement("div");
+        help.className = "item-help-text";
+        help.textContent = ITEM_HELP[itemObj.type];
+        typeLabel.appendChild(help);
+    }
+    const jsonFlag = document.createElement("div");
+    jsonFlag.className = "json-flag";
+    jsonFlag.textContent = "⚠ invalid JSON";
+    typeLabel.appendChild(jsonFlag);
+
     const cfg = ITEM_CONFIGS[itemObj.type] || {};
 
     // 1. Static Informational Labels
@@ -2143,12 +2229,22 @@ else if (itemObj.type === "frames" || itemObj.type === "frames8" || itemObj.type
         container.dataset.valueType = "string";
     }
 
+// [Tim edition] Duplicate Button — copies this item (with its current
+// values) directly below itself.
+const dupBtn = document.createElement("button");
+dupBtn.className = "dup-btn";
+dupBtn.textContent = "⧉";
+dupBtn.title = "Duplicate item";
+dupBtn.onclick = () => duplicateItem(container);
+container.appendChild(dupBtn);
+
 // Delete Button
 const delBtn = document.createElement("button");
 delBtn.className = "delete-btn"; // Added class name
 delBtn.textContent = "❌";
 delBtn.title = "Remove item";
 delBtn.onclick = () => {
+    pushUndoSnapshot(); // [Tim edition] deletions are undoable
     container.remove();
     updatePreview();
 };
@@ -2246,6 +2342,7 @@ function readItemsFromDOM() {
    =========================== */
 function addItem(type = "prompt", value = undefined, skipUpdate = false) {
     clearDragHighlight();
+    if (!skipUpdate) pushUndoSnapshot(); // [Tim edition] additions are undoable
 
     const cfg = ITEM_CONFIGS[type];
     
@@ -2328,6 +2425,7 @@ function handleTouchMove(e) {
 
 function handleTouchEnd(e) {
     if (!draggedEl) return;
+    pushUndoSnapshot(); // [Tim edition] touch reorders are undoable; deduped if nothing moved
     
     const list = document.getElementById("itemtList");
     
@@ -2377,6 +2475,7 @@ window.addEventListener("touchend", clearDragHighlight);
 
 list.addEventListener("drop", (e) => {
     e.preventDefault();
+    pushUndoSnapshot(); // [Tim edition] drops (new item or reorder) are undoable; deduped if nothing changed
     const data = e.dataTransfer.getData("text/plain");
 
     if (data.startsWith("NEW_ITEM:")) {
@@ -2579,6 +2678,12 @@ function updatePreview() {
     savePromptTriggers();
     const projectName = document.getElementById("projectName").value || "Unnamed";
     const items = readItemsFromDOM();
+
+    // [Tim edition] JSON validation: mark bad items in the list itself
+    const invalidJsonItems = findInvalidJsonItems(items);
+    document.querySelectorAll("#itemtList .item").forEach((el, i) => {
+        el.classList.toggle("invalid-json", invalidJsonItems.includes(i + 1));
+    });
     let promptCount = 0;
     // [Tim edition fix] Preview totals were computed with a running
     // subtraction that only came out right for a single frames item, and
@@ -2603,6 +2708,9 @@ function updatePreview() {
     
     let output = `=== PROJECT: ${projectName} ===\n\n`;
     output += `Prompt Total: ${promptCount}\n`;
+    if (invalidJsonItems.length) {
+        output += `⚠️ Invalid JSON in item(s): ${invalidJsonItems.join(", ")} — marked ⚠ in the list. Export is blocked until fixed.\n`;
+    }
 
     if (framesTotal > 0) {
         output += `Wan Frames Total: ${framesTotal} (${(framesTotal / 16).toFixed(2)} sec)\n`;
@@ -2694,9 +2802,17 @@ if (fileContent) {
     }
 }
         } else if (it.type === "prompt" || it.type === "concat" || it.type === "prefix" || it.type === "negPrompt") {
-             const expanded = resolvePromptTriggers(it.value || "");
+             // [Tim edition] Preview now also shows $ wildcards (first option —
+             // the real export rolls randomly) like it already showed @ triggers
+             const expanded = resolveWildcardShortcutsPreview(resolvePromptTriggers(it.value || ""));
              output += `[${idx + 1}] ${it.type}: "${expanded}"\n\n`;
-        } else if (it.type === "note" || it.type === "interrogate" || it.type === "enhance" || it.type === "config" || it.type === "poseJSON") {
+        } else if (it.type === "config") {
+             // [Tim edition] show the resolved config, not the raw #shortcut text
+             output += `[${idx + 1}] ${it.type}: ${resolveConfigShortcuts(it.value || "")}\n\n`;
+        } else if (it.type === "poseJSON") {
+             // [Tim edition] show the resolved pose, not the raw #shortcut text
+             output += `[${idx + 1}] ${it.type}: ${resolveposeJSONShortcuts(it.value || "")}\n\n`;
+        } else if (it.type === "note" || it.type === "interrogate" || it.type === "enhance") {
              output += `[${idx + 1}] ${it.type}: ${it.value}\n\n`;
         } else if (it.type === "wildcard" || it.type === "sweep") {
             let parsedVal = parseJSONSafely(it.value, null);
@@ -2756,6 +2872,199 @@ if (fileContent) {
     });
 
     document.getElementById("preview").textContent = output;
+
+    // [Tim edition] keep the Undo button's state honest, and autosave
+    const undoBtn = document.getElementById("undoBtn");
+    if (undoBtn) undoBtn.disabled = undoStack.length === 0;
+    scheduleAutosave();
+}
+
+/* ===========================
+   [Tim edition] Project state helpers: undo, autosave, duplicate,
+   JSON validation. collectProjectData mirrors saveProject's assembly
+   exactly, so snapshots/autosaves are ordinary project files in memory.
+   =========================== */
+function collectProjectData() {
+    savePromptTriggers();
+    saveConfigShortcuts();
+    saveposeJSONShortcuts();
+    saveWildcardShortcuts();
+    return {
+        projectName: document.getElementById("projectName").value || "",
+        items: readItemsFromDOM(),
+        promptTriggers,
+        configShortcuts,
+        poseJSONShortcuts,
+        wildcardShortcuts
+    };
+}
+
+// Rebuilds the whole Editor from a project data object.
+// Mirrors the rebuild half of loadProject.
+function applyProjectData(data) {
+    document.getElementById("projectName").value = "";
+    document.getElementById("triggerListPrompt").innerHTML = "";
+    document.getElementById("configShortcutsList").innerHTML = "";
+    document.getElementById("poseJSONShortcutsList").innerHTML = "";
+    document.getElementById("wildcardsList").innerHTML = "";
+    document.getElementById("itemtList").innerHTML = "";
+
+    promptTriggers = {};
+    configShortcuts = {};
+    poseJSONShortcuts = {};
+    wildcardShortcuts = {};
+
+    document.getElementById("projectName").value = data.projectName || "";
+
+    if (data.promptTriggers && typeof data.promptTriggers === "object") {
+        Object.entries(data.promptTriggers).forEach(([k, v]) => addTriggerPrompt(k, v, true));
+    }
+    if (data.configShortcuts && typeof data.configShortcuts === "object") {
+        Object.entries(data.configShortcuts).forEach(([k, v]) => addConfigShortcut(k, v, true));
+    }
+    if (data.poseJSONShortcuts && typeof data.poseJSONShortcuts === "object") {
+        Object.entries(data.poseJSONShortcuts).forEach(([k, v]) => addPose(k, v, true));
+    }
+    if (data.wildcardShortcuts && typeof data.wildcardShortcuts === "object") {
+        Object.entries(data.wildcardShortcuts).forEach(([k, v]) => addWildcard(k, v, true));
+    }
+
+    if (data.items && Array.isArray(data.items) && data.items.length > 0) {
+        data.items.forEach((it) => addItem(it.type, it.value, true));
+    } else {
+        addItem("note", "", true);
+    }
+
+    if (typeof closeOverlay === "function") {
+        closeOverlay();
+    }
+    updatePreview();
+}
+
+/* ---------- Undo (structural changes: add / delete / duplicate /
+   reorder / load / new). Snapshots are full project states, deduped,
+   capped at 30. Text typing is left to each field's native undo. --- */
+const undoStack = [];
+function pushUndoSnapshot() {
+    try {
+        const snapshot = JSON.stringify(collectProjectData());
+        if (undoStack.length && undoStack[undoStack.length - 1] === snapshot) return;
+        undoStack.push(snapshot);
+        if (undoStack.length > 30) undoStack.shift();
+    } catch (e) { /* snapshotting must never break editing */ }
+}
+function undoLast() {
+    if (!undoStack.length) return;
+    const snapshot = undoStack.pop();
+    try {
+        applyProjectData(JSON.parse(snapshot));
+    } catch (e) { console.error("Undo failed:", e); }
+}
+document.addEventListener("keydown", (e) => {
+    if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === "z") {
+        const t = e.target;
+        if (t && (t.tagName === "TEXTAREA" || t.tagName === "INPUT")) return; // field's own undo wins
+        e.preventDefault();
+        undoLast();
+    }
+});
+
+/* ---------- Duplicate ---------- */
+function duplicateItem(sourceEl) {
+    const els = [...document.querySelectorAll("#itemtList .item")];
+    const idx = els.indexOf(sourceEl);
+    if (idx < 0) return;
+    const it = readItemsFromDOM()[idx];
+    if (!it) return;
+    pushUndoSnapshot();
+    const newEl = addItem(it.type, it.value, true);
+    if (it.type === "fileLoad") {
+        // addItem alone can't carry the picked file's contents — copy them
+        // (and the remembered file name) from the source item.
+        if (sourceEl.dataset.fileContent) newEl.dataset.fileContent = sourceEl.dataset.fileContent;
+        newEl.dataset.value = sourceEl.dataset.value || it.value || "";
+    }
+    sourceEl.after(newEl);
+    updatePreview();
+}
+
+/* ---------- Autosave (localStorage, debounced from updatePreview) --- */
+const AUTOSAVE_KEY = "storyflowTimEdition.autosave.v1";
+let autosaveTimer = null;
+function scheduleAutosave() {
+    if (autosaveTimer) clearTimeout(autosaveTimer);
+    autosaveTimer = setTimeout(() => {
+        try {
+            localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(collectProjectData()));
+        } catch (e) { /* storage unavailable (private mode etc.) — skip silently */ }
+    }, 700);
+}
+function restoreAutosave() {
+    try {
+        const raw = localStorage.getItem(AUTOSAVE_KEY);
+        if (!raw) return false;
+        const data = JSON.parse(raw);
+        if (!data || !Array.isArray(data.items) || data.items.length === 0) return false;
+        // Only restore if there's something worth restoring: more than the
+        // lone empty Note a fresh project starts with, or a project name.
+        const onlyItem = data.items.length === 1 ? data.items[0] : null;
+        const isPristine = onlyItem && onlyItem.type === "note" && !onlyItem.value && !data.projectName;
+        if (isPristine) return false;
+        applyProjectData(data);
+        return true;
+    } catch (e) {
+        return false;
+    }
+}
+
+/* ---------- JSON validation ----------
+   Free-text JSON (Config, Pose) is checked after shortcut expansion;
+   form-builder JSON is checked as stored. Returns 1-based item numbers. */
+const JSON_BUILDER_TYPES = ["size", "moveScale", "adaptSize", "moodboardWeights", "maskBody", "inpaintTools", "xlMagic", "loop", "wildcard", "sweep", "framesDialog", "hrf", "matte"];
+function findInvalidJsonItems(items) {
+    const bad = [];
+    items.forEach((it, idx) => {
+        let text = null;
+        if (it.type === "config") {
+            text = resolveConfigShortcuts(it.value || "").trim();
+            if (text === "") { bad.push(idx + 1); return; }
+        } else if (it.type === "poseJSON") {
+            text = resolveposeJSONShortcuts(it.value || "").trim();
+            if (text === "") { bad.push(idx + 1); return; }
+        } else if (JSON_BUILDER_TYPES.includes(it.type)) {
+            text = typeof it.value === "string" ? it.value : JSON.stringify(it.value);
+        }
+        if (text !== null) {
+            try { JSON.parse(text); } catch (e) { bad.push(idx + 1); }
+        }
+    });
+    return bad;
+}
+function guardExport(items) {
+    const bad = findInvalidJsonItems(items);
+    if (bad.length) {
+        alert("Can't export yet — item(s) " + bad.join(", ") + " contain invalid JSON (marked with a red outline and ⚠ in the list). Fix the JSON, or delete those items, then export again.");
+        return false;
+    }
+    return true;
+}
+
+/* ---------- Preview-only $ wildcard display ----------
+   Real export rolls randomly; Preview stays deterministic and shows the
+   first option (or the [n] indexed one). */
+function resolveWildcardShortcutsPreview(text) {
+    if (!text) return "";
+    return text.replace(/(\$[a-zA-Z0-9_]+)(\[\d+\])?/g, (match, key, indexGroup) => {
+        const valueString = wildcardShortcuts[key];
+        if (!valueString) return match;
+        const options = valueString.split('|').map(s => s.trim()).filter(s => s.length > 0);
+        if (!options.length) return match;
+        if (indexGroup) {
+            const i = parseInt(indexGroup.slice(1, -1), 10) - 1;
+            return (i >= 0 && i < options.length) ? options[i] : match;
+        }
+        return options[0];
+    });
 }
 
 /* ===========================
@@ -2818,6 +3127,7 @@ function loadProject() {
             try {
                 const data = JSON.parse(evt.target.result);
 
+                pushUndoSnapshot(); // [Tim edition] loading a project is undoable
                 document.getElementById("projectName").value = "";
                 document.getElementById("triggerListPrompt").innerHTML = "";
                 document.getElementById("configShortcutsList").innerHTML = "";
@@ -2872,6 +3182,7 @@ function loadProject() {
    New Project: clear DOM 
    =========================== */
 function newProject() {
+    pushUndoSnapshot(); // [Tim edition] starting over is undoable
     document.getElementById("projectName").value = "";
     document.getElementById("triggerListPrompt").innerHTML = "";
     document.getElementById("configShortcutsList").innerHTML = "";
@@ -3013,6 +3324,7 @@ function generateInstructionString() {
    Export to Pipeline (.txt)
    =========================== */
 function exportTextfile() {
+    if (!guardExport(readItemsFromDOM())) return; // [Tim edition] block export on invalid JSON
     const output = generateInstructionString();
     const projName = document.getElementById("projectName").value || "project";
     const blob = new Blob([output], { type: "text/plain" });
@@ -3043,6 +3355,7 @@ function exportTextfile() {
 //      several places the modern API does not
 //   3. a manual-copy popup with the text pre-selected for long-press Copy
 async function exportClipboard(btn) {
+  if (!guardExport(readItemsFromDOM())) return; // [Tim edition] block export on invalid JSON
   const output = generateInstructionString();
   const originalLabel = btn ? btn.innerHTML : null;
   const report = (label) => {
@@ -3111,7 +3424,11 @@ function showManualCopyFallback(text) {
    Boot defaults
    =========================== */
 function boot() {
-  newProject();
+  // [Tim edition] restore the autosaved project if there is one worth
+  // restoring; otherwise start fresh as before.
+  if (!restoreAutosave()) {
+    newProject();
+  }
   updatePreview();
 }
 

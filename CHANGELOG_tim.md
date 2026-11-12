@@ -42,6 +42,22 @@ These two files are Tim's own copies to modify:
 10. **Preview frame totals fixed and H3 included (Editor).**
     The Wan/LTX totals used a running-subtraction formula that only came out right for a single frames item (two 81-frame Wan items totaled 161 instead of 162, with seconds computed off the wrong base too). Totals are now plain sums, an H3 total line exists, and the per-item seconds in Preview use frames ÷ fps — matching the item badges — instead of (frames − 1) ÷ fps.
 
+## UI round — Nov 12, 2026 ("then we can tackle UI fixes")
+
+11. **Duplicate item button (Editor).** Every item now has a ⧉ button next to ❌ that copies the item — with its current values — directly below itself. File-embed items also copy the picked file's contents (which even a project reload can't do).
+
+12. **Undo (Editor).** Structural changes — add, delete, duplicate, drag/touch reorder, Load Project, New Project — now snapshot the whole project first. The ↩️ Undo button (action bar) or Ctrl/Cmd+Z steps back through up to 30 snapshots. Typing inside a field keeps that field's own native undo; Ctrl+Z only steps in outside text fields.
+
+13. **Autosave (Editor).** The project (items + all four shortcut libraries + name) is saved to the browser's local storage ~0.7 s after any change, and restored on page load when there's something worth restoring (more than a fresh project's lone empty Note). Closing the tab mid-edit no longer loses the project. New Project replaces the autosave as soon as it changes anything, as expected.
+
+14. **JSON validation in the Editor (Editor).** Config and Pose items are validated as you work — after # shortcut expansion — and so is every form-builder item's JSON. Bad items get a red outline and a ⚠ invalid JSON flag in the list, Preview names the offending item numbers, and both export buttons refuse to export until it's fixed (previously a bad Config exported malformed JSON that only failed later, inside Draw Things' preflight).
+
+15. **One-line help on every item (Editor).** Each item now shows a short plain-language line under its type label saying what it does (all 55 tray types). The original's only in-item help was placeholder text inside empty fields.
+
+16. **Preview tells the truth (Editor).** Preview now shows Config and Pose items with their # shortcuts expanded, and prompt-family items with $ Editor wildcards shown as their first option (the real export still rolls randomly — Preview stays deterministic instead of re-rolling on every keystroke).
+
+Validated with a real DOM test (jsdom): 21/21 checks — boot, help coverage for all 55 types, duplicate/delete/undo chains, validation flagging + export block + unflagging, Preview resolution, autosave write + restore — plus all three sample projects load and export cleanly (each ending in {"end": true}).
+
 Every fix is marked in the code with a `[Tim edition fix]` comment next to the changed lines, so the changes are easy to find, review, or revert.
 
 ## Validation done
@@ -57,4 +73,4 @@ Not tested: an actual run inside Draw Things (no Draw Things on this machine). F
 - Round 2 fixed: Frames-by-Dialog Wan timing, the mask seam (except the layer-clear limit below), the fragile answer-model menu lookup, and the Preview H3 totals / per-item seconds.
 - Preview still doesn't expand `$` Editor wildcards or `#` config shortcuts, so Preview isn't a fully true picture of the export.
 - No instruction can clear the copy of a file-loaded mask already sitting in Draw Things' own mask layer; that still has to be cleared in Draw Things itself.
-- UI round (planned next, at Tim's direction): duplicate-item button, undo, autosave, Editor-side JSON validation, in-Editor help/tooltips.
+- UI round DONE (fixes 11–16 above): duplicate-item button, undo, autosave, Editor-side JSON validation, in-Editor help, truthful Preview. Remaining known items: the mask-layer clear limit above; naming collisions (# used twice, "wildcard" used twice); GetConfigPro never examined.

@@ -71,8 +71,9 @@
 <div class="warn"><strong>Careful with cycles:</strong> if a trigger's text (directly or through others) contains itself, expansion can't finish cleanly. The original Editor looped forever and hung the tab; the Tim Edition caps expansion (10 passes / 200k characters) so the tab survives, but the output will be garbage. Keep trigger definitions one-directional.</div>
 
 <h2>The Preview tab</h2>
-<p>Preview shows the project name, how many Prompt instructions you have, total Wan/LTX video running time, and a numbered, readable rendering of the list with <code>@</code> triggers already expanded. Wildcard and Sweep items show only their first card.</p>
-<p>What Preview does <em>not</em> do: it doesn't expand <code>$</code> wildcards or <code>#</code> config shortcuts, and its running-time totals don't include MiniMax H3 frames. Treat Preview as a sanity check, not a photograph of the export.</p>
+<p>Preview shows the project name, how many Prompt instructions you have, total video running time for all three families (Wan / LTX / MiniMax H3), and a numbered, readable rendering of the list with <code>@</code> triggers already expanded. In the Tim Edition it also expands <code>#</code> config and pose shortcuts and shows <code>$</code> wildcards as their first option (the real export rolls randomly, so Preview stays stable while you type). Wildcard and Sweep items show only their first card — their real pick happens during the run.</p>
+<p>Preview also validates JSON as you work: Config/Pose items (after shortcut expansion) and form-builder items with bad JSON get a red outline and a ⚠ flag in the list, Preview names the offending item numbers, and both export buttons refuse to export until it's fixed.</p>
+<p><strong>Working comforts (Tim Edition):</strong> every item shows a one-line description under its label and has a ⧉ duplicate button next to ❌. List changes — add, delete, duplicate, reorder, Load, New — can be undone with the ↩️ Undo button or Ctrl/Cmd+Z, up to 30 steps (typing inside a field keeps that field's own undo). The project also autosaves in your browser as you work and restores itself when you reopen the page.</p>
 
 <h2>Projects vs exports — don't mix them up</h2>
 <table>
