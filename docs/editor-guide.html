@@ -68,7 +68,7 @@
 <tr><td><strong>Config Shortcuts</strong></td><td><code>#name</code></td><td>Config items</td><td>Stores a whole chunk of Draw Things settings JSON. A Config item can be just <code>#16:9</code> or <code>#wan_i2v</code>; at export the full settings are swapped in. Change the shortcut once and every Config item using it changes — the "set it in one place" tool.</td></tr>
 <tr><td><strong>JSON Poses</strong></td><td><code>#name</code></td><td>JSON Pose items</td><td>Stores OpenPose skeleton JSON under a name. Yes, same <code>#</code> symbol as Config Shortcuts — which library applies depends on which kind of item you're typing in.</td></tr>
 </table>
-<div class="warn"><strong>Careful with cycles:</strong> if a trigger's text (directly or through others) contains itself, the expansion loop never finishes and the Editor tab hangs. Keep trigger definitions one-directional.</div>
+<div class="warn"><strong>Careful with cycles:</strong> if a trigger's text (directly or through others) contains itself, expansion can't finish cleanly. The original Editor looped forever and hung the tab; the Tim Edition caps expansion (10 passes / 200k characters) so the tab survives, but the output will be garbage. Keep trigger definitions one-directional.</div>
 
 <h2>The Preview tab</h2>
 <p>Preview shows the project name, how many Prompt instructions you have, total Wan/LTX video running time, and a numbered, readable rendering of the list with <code>@</code> triggers already expanded. Wildcard and Sweep items show only their first card.</p>

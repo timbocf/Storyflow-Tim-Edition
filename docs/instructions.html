@@ -95,8 +95,8 @@
 <p>The mask is the black/white "only repaint here" layer used for inpainting. Once set, it is handed to every render until cleared.</p>
 <table>
 <tr><th>Instruction</th><th>What it does</th></tr>
-<tr><td>Clear Mask</td><td>Clears the Pipeline's mask. (Known seam: it does not clear a mask that was loaded into Draw Things' own mask layer from a file — see <a href="tim-edition.html">known issues</a>.)</td></tr>
-<tr><td>Load Mask</td><td>Loads a mask image from Pictures into Draw Things' mask layer.</td></tr>
+<tr><td>Clear Mask</td><td>Clears the Pipeline's mask state, including its record of any file-loaded mask. One limit remains: the copy of a file mask already loaded into Draw Things' own mask layer can only be cleared in Draw Things itself — no instruction can reach it.</td></tr>
+<tr><td>Load Mask</td><td>Loads a mask image from Pictures into Draw Things' mask layer. In the Tim Edition this also replaces any internally-made mask as "the current mask," and Mask to Canvas can display it (the original kept the two mask channels separate, so a stale internal mask could override the file at render time).</td></tr>
 <tr><td>Foreground / Background Mask</td><td>Auto-detects that part of the image and makes it the mask.</td></tr>
 <tr><td>Body Mask</td><td>Builds a mask from body-part checkboxes (upper body / lower body / clothes / neck) plus an "extra" grow-by-pixels amount. The clothing-swap-and-inpaint workflow. If detection fails, the mask ends up empty.</td></tr>
 <tr><td>Load ⓘ Mask</td><td>Loop-only: next mask file from a folder each pass — kept in step with Load ⓘ Image for batch processing a folder with matching masks.</td></tr>
@@ -109,7 +109,7 @@
 <tr><td>Extract Depth</td><td>Creates a real depth map from the canvas image into the depth layer.</td></tr>
 <tr><td>Canvas to Depth</td><td>Copies the canvas picture into the depth layer as-is (no extraction).</td></tr>
 <tr><td>Depth to Canvas</td><td>Copies the depth layer back onto the canvas.</td></tr>
-<tr><td>Mask to Canvas</td><td>Copies the mask onto the canvas so you can see or save it as a normal image. Only works for masks the Pipeline made itself this run (Foreground/Background/Body/Ask), not file-loaded masks.</td></tr>
+<tr><td>Mask to Canvas</td><td>Copies the mask onto the canvas so you can see or save it as a normal image. Works for masks the Pipeline made itself this run (Foreground/Background/Body/Ask) and — in the Tim Edition — for file-loaded masks too.</td></tr>
 <tr><td>JSON Pose</td><td>Loads an OpenPose skeleton (joint-coordinates JSON, copied out of Draw Things' pose layer, or a <code>#pose</code> shortcut) as the pose control. Sticking point: the pose's recorded width/height must match your render size.</td></tr>
 </table>
 

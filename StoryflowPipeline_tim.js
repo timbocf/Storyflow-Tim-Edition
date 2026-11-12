@@ -282,7 +282,10 @@ const genIndices = instructions.reduce((acc, instruction, idx) => {
 const answerIndices = instructions.reduce((acc, instruction, idx) => {
   const [key, value] = Object.entries(instruction)[0] || [];
 
-  if (key === "enhance" || key === "interrogate" || key === "askMask" || key === "askZoom") {
+  // [Tim edition fix] removed a check for an "askMask" instruction that
+  // does not exist (the real instruction is "maskAsk") — harmless, but it
+  // made this counter look like it covered something it never could.
+  if (key === "enhance" || key === "interrogate" || key === "askZoom") {
     acc.push(idx);
   }
 
@@ -329,6 +332,11 @@ const selectModel = [
 //
 
 let userSelectionB;
+// [Tim edition fix] The answer-model menu's position in the result array
+// is captured while Menu B is being built (below), instead of being
+// re-derived afterward by counting sections — the old hand-count silently
+// read the wrong slot if a section was ever added or removed.
+let answerMenuIndex = -1;
 
 // Check the warnings array length instead of the single string
 if (warnings.length === 0) {
@@ -354,6 +362,9 @@ if (answerIndices.length > 0) {
         this.menu(0, selectModel)
       );
        }
+ // [Tim edition fix] when the answer menu exists it is the last element
+ // built, so its result slot is the last one — record it here.
+ answerMenuIndex = sectionsB.length - 1;
  return sectionsB;
     },
   );
@@ -386,17 +397,10 @@ if (warnings.length > 0) {
 // Safely extract the selected model or fall back to a default
 let askModel = selectModel[0]; // Default fallback
 
-// chech user selection for answer model
-let menuIndex = 3;
-if (joinedPathString !== "") {
-  menuIndex += 1; // "FILES" section adds 1 slot
-}
-if (answerIndices.length > 0) {
-  menuIndex += 1; // "ANSWERS" section adds 1 slot right before the menu
-}
-// Check against the calculated index
-if (answerIndices.length > 0 && userSelectionB && userSelectionB[menuIndex] !== undefined) {
-  askModel = selectModel[userSelectionB[menuIndex]];
+// [Tim edition fix] use the menu position captured while Menu B was built
+// (see answerMenuIndex above) instead of counting sections by hand.
+if (answerIndices.length > 0 && userSelectionB && answerMenuIndex >= 0 && userSelectionB[answerMenuIndex] !== undefined) {
+  askModel = selectModel[userSelectionB[answerMenuIndex]];
 }
 
 //
@@ -491,6 +495,15 @@ const MODEL_FRAME_CONFIGS = [
     fps: 24,
     step: 17,
     offset: 5,
+  },
+  {
+    // [Tim edition fix] Wan models previously fell through to the LTX
+    // default below (25 fps, step 8), so dialog clips ran long.
+    // Wan rule: 16 fps, steps of 4, offset 1.
+    pattern: /wan/i,
+    fps: 16,
+    step: 4,
+    offset: 1,
   },
   // Add future models here:
   // {
@@ -1154,6 +1167,13 @@ let configuration = pipeline.configuration;
 let negativePrompt = pipeline.prompts.negativePrompt;
 let Pvalue;
 let mask = null;
+// [Tim edition fix] Source of the most recent file-loaded mask (maskLoad /
+// loopLoadMask). Those instructions load into Draw Things' mask layer and
+// never produced a mask object, so the two mask channels drifted apart:
+// a stale internal mask could override a freshly loaded file mask at
+// render time, and maskGet could not see file-loaded masks at all.
+// Tracking the source lets the mask instructions keep one coherent state.
+let maskFileSrc = null;
 let _loopMarker = -1;
 let _loopCounter = 0;
 let _maxLoops = 0;
@@ -1452,40 +1472,58 @@ for (let i = 0; i < instructions.length; i++) {
 
     case "maskClear":
       // reset mask to null logic
+      // [Tim edition fix] also forget any file-loaded mask source, so a
+      // later maskGet can't resurrect it. (Clearing the copy already loaded
+      // into Draw Things' own mask layer is Draw Things' side of the wall —
+      // no instruction in this script can reach it.)
       mask = null;
+      maskFileSrc = null;
       break;
 
     case "maskLoad":
       // load mask from path logic
       Pvalue = "file://" + picturesPath + "/" + value;
       canvas.loadMaskFromSrc(Pvalue);
+      // [Tim edition fix] the loaded file is now the mask: drop any stale
+      // internal mask so generate() can't override the file at render time,
+      // and remember the source so maskGet can find it.
+      mask = null;
+      maskFileSrc = Pvalue;
       __dtSleep(0.2);
       break;
 
     case "maskGet":
       // copy mask layer to canvas logic
+      // [Tim edition fix] fall back to the file-loaded mask source when
+      // there is no internal mask object.
       if (mask !== null) {
         canvas.loadImageSrc(mask.src);
+      } else if (maskFileSrc !== null) {
+        canvas.loadImageSrc(maskFileSrc);
       }
       break;
 
     case "maskBkgd":
       // set mask to background logic
       mask = canvas.backgroundMask;
+      maskFileSrc = null; // [Tim edition fix] internal mask supersedes any file mask
       break;
 
     case "maskFG":
       // set mask to foreground logic
       mask = canvas.foregroundMask;
+      maskFileSrc = null; // [Tim edition fix] internal mask supersedes any file mask
       break;
 
     case "maskBody": {
       // set mask to foreground logic
       try {
         mask = setBodyparts(value);
+        maskFileSrc = null; // [Tim edition fix] internal mask supersedes any file mask
       } catch (error) {
         console.warn(`maskBody at item ${i} failed: ${error.message}`);
         mask = null; // Fall back to no mask so downstream mask ops don't crash
+        maskFileSrc = null; // [Tim edition fix] a failed body mask means no mask at all
       }
       break;
     }
@@ -1493,6 +1531,7 @@ for (let i = 0; i < instructions.length; i++) {
     case "maskAsk":
       // create a mask based on Answer() logic
       mask = maskAsk(value);
+      maskFileSrc = null; // [Tim edition fix] internal mask supersedes any file mask
       break;
 
     case "depthExtract":
@@ -1585,6 +1624,10 @@ for (let i = 0; i < instructions.length; i++) {
       // add to mask layer incrementally from directory
       Pvalue = "file://" + getDirectoryByIndex(value, _loopCounter);
       canvas.loadMaskFromSrc(Pvalue);
+      // [Tim edition fix] same bookkeeping as maskLoad: the file mask
+      // supersedes any internal mask, and maskGet can find it.
+      mask = null;
+      maskFileSrc = Pvalue;
       __dtSleep(0.2);
       break;
 

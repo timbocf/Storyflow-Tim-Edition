@@ -1887,12 +1887,20 @@ function resolveposeJSONShortcuts(text) {
   if (!text) return "";
   let replaced = text;
   let prev;
+  let passes = 0;
   do {
     prev = replaced;
     for (const [key, val] of Object.entries(poseJSONShortcuts)) {
       replaced = replaced.split(key).join(val);
     }
-  } while (replaced !== prev);
+    // [Tim edition fix] cap the passes AND the output size (here and in
+    // the other three resolvers): cyclic shortcut definitions previously
+    // looped forever and froze the Editor tab. Real nesting is only a few
+    // levels deep and real prompt text is a few KB, so 10 passes / 200k
+    // chars is generous headroom — and the size cap matters because a
+    // growing cycle doubles the text every pass.
+    passes++;
+  } while (replaced !== prev && passes < 10 && replaced.length <= 200000);
   return replaced;
 }
 
@@ -2490,12 +2498,14 @@ function resolvePromptTriggers(text) {
   if (!text) return "";
   let replaced = text;
   let prev;
+  let passes = 0;
   do {
     prev = replaced;
     for (const [key, val] of Object.entries(promptTriggers)) {
       replaced = replaced.split(key).join(val);
     }
-  } while (replaced !== prev);
+    passes++; // [Tim edition fix] pass/size caps — see resolveposeJSONShortcuts
+  } while (replaced !== prev && passes < 10 && replaced.length <= 200000);
   return replaced;
 }
 
@@ -2503,12 +2513,14 @@ function resolveConfigShortcuts(text) {
   if (!text) return "";
   let replaced = text;
   let prev;
+  let passes = 0;
   do {
     prev = replaced;
     for (const [key, val] of Object.entries(configShortcuts)) {
       replaced = replaced.split(key).join(val);
     }
-  } while (replaced !== prev);
+    passes++; // [Tim edition fix] pass/size caps — see resolveposeJSONShortcuts
+  } while (replaced !== prev && passes < 10 && replaced.length <= 200000);
   return replaced;
 }
 
@@ -2517,6 +2529,7 @@ function resolveWildcardShortcuts(text) {
     let replaced = text;
     const wildcardPattern = /(\$[a-zA-Z0-9_]+)(\[\d+\])?/g; 
     let prev;
+    let passes = 0;
     do {
         prev = replaced;
         replaced = replaced.replace(wildcardPattern, (match, key, indexGroup) => {
@@ -2538,7 +2551,8 @@ function resolveWildcardShortcuts(text) {
             }
             return replacementValue;
         });
-    } while (replaced !== prev);
+        passes++; // [Tim edition fix] pass/size caps — see resolveposeJSONShortcuts
+    } while (replaced !== prev && passes < 10 && replaced.length <= 200000);
     return replaced;
 }
 
@@ -2566,20 +2580,24 @@ function updatePreview() {
     const projectName = document.getElementById("projectName").value || "Unnamed";
     const items = readItemsFromDOM();
     let promptCount = 0;
-    let framesCount = 0;
-    let framesCount8 = 0;
+    // [Tim edition fix] Preview totals were computed with a running
+    // subtraction that only came out right for a single frames item, and
+    // H3 frames were never totalled at all. These are now plain sums per
+    // frame type, H3 included. (Items set to 1 frame are stills and stay
+    // out of the totals, as before.)
     let framesTotal = 0;
     let framesTotal8 = 0;
+    let framesTotal17 = 0;
     
     items.forEach(item => {
         if (item.type === 'prompt') {
             promptCount++;
         } else if (item.type === 'frames' && item.value > 1) {
-            framesCount++;
-            framesTotal += item.value - framesCount;
+            framesTotal += item.value;
         } else if (item.type === 'frames8' && item.value > 1) {
-            framesCount8++;
-            framesTotal8 += item.value - framesCount8;
+            framesTotal8 += item.value;
+        } else if (item.type === 'frames17' && item.value > 1) {
+            framesTotal17 += item.value;
         }
     });
     
@@ -2587,10 +2605,13 @@ function updatePreview() {
     output += `Prompt Total: ${promptCount}\n`;
 
     if (framesTotal > 0) {
-        output += `Wan Frames Total: ${framesTotal+framesCount} (${(Number(framesTotal) / 16).toFixed(2)} sec)\n`;
+        output += `Wan Frames Total: ${framesTotal} (${(framesTotal / 16).toFixed(2)} sec)\n`;
     }
     if (framesTotal8 > 0) {
-        output += `LTX Frames Total: ${framesTotal8+framesCount8} (${(Number(framesTotal8) / 25).toFixed(2)} sec)\n`;
+        output += `LTX Frames Total: ${framesTotal8} (${(framesTotal8 / 25).toFixed(2)} sec)\n`;
+    }
+    if (framesTotal17 > 0) {
+        output += `H3 Frames Total: ${framesTotal17} (${(framesTotal17 / 24).toFixed(2)} sec)\n`;
     }
 
     output += "\n=== Instructions (expanded prompts) ===\n";
@@ -2706,11 +2727,13 @@ if (fileContent) {
         ) {
              output += `[${idx + 1}] ${it.type}: ${JSON.stringify(it.value)}\n\n`;
         } else if (it.type === "frames") {
-             output += `[${idx + 1}] ${it.type}: ${JSON.stringify(it.value)} — ${JSON.stringify((it.value-1)/16)}sec 16fps (Wan)\n\n`;
+             // [Tim edition fix] seconds now use value/fps, matching the
+             // item badges (was (value-1)/fps for all three frame types)
+             output += `[${idx + 1}] ${it.type}: ${JSON.stringify(it.value)} — ${JSON.stringify(it.value/16)}sec 16fps (Wan)\n\n`;
         } else if (it.type === "frames8") {
-             output += `[${idx + 1}] ${it.type}: ${JSON.stringify(it.value)} — ${JSON.stringify((it.value-1)/25)}sec 25fps (LTX2)\n\n`;
+             output += `[${idx + 1}] ${it.type}: ${JSON.stringify(it.value)} — ${JSON.stringify(it.value/25)}sec 25fps (LTX2)\n\n`;
         } else if (it.type === "frames17") {
-             output += `[${idx + 1}] ${it.type}: ${JSON.stringify(it.value)} — ${JSON.stringify((it.value-1)/24)}sec 24fps (H3)\n\n`;
+             output += `[${idx + 1}] ${it.type}: ${JSON.stringify(it.value)} — ${JSON.stringify(it.value/24)}sec 24fps (H3)\n\n`;
         } else if (
              it.type === "size" ||
              it.type === "moveScale" ||

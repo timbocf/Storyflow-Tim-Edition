@@ -48,7 +48,7 @@
 <li>It rounds the result <em>up</em> to the loaded model's frame pattern and adds your <strong>Pad Frames</strong> (default 49, snapped to an 8n+1 value) — breathing room before/after the line.</li>
 </ol>
 <p><strong>Which pattern?</strong> The Pipeline looks at the loaded model's name: if it contains "H3" it uses 24 fps / step 17 / offset 5; anything else gets 25 fps / step 8 / offset 1 (the LTX rule).</p>
-<div class="warn"><strong>Known issue — Wan timing runs long:</strong> because everything that isn't H3 gets the LTX rule, Frames by Dialog used with a Wan model (16 fps, step 4) produces more frames than the dialog needs. The clip comes out longer than the line. Still on the fix list — see <a href="tim-edition.html">Tim Edition Changes</a>.</div>
+<div class="note"><strong>Tim Edition fix:</strong> the original table only special-cased H3, so Wan models silently got the LTX rule and dialog clips ran long. The Tim Edition's table also matches model names containing "wan" and applies the proper 16 fps / step 4 / offset 1 rule. Anything that matches neither H3 nor Wan still uses the LTX rule as the default.</div>
 
 <h3>The Generate checkbox</h3>
 <p>Frames by Dialog has an optional <strong>Generate</strong> box. Tick it and the instruction also renders on the spot, using the bucket as the prompt — no separate Prompt item needed, and the preflight render counter counts it as a render. Leave it unticked and it only sets the frame count, so the following Prompt (or video instruction sequence) renders with that length.</p>
