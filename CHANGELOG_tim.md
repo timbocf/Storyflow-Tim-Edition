@@ -70,6 +70,8 @@ Validated with a real DOM test (jsdom): 21/21 checks — boot, help coverage for
     - **23. Tray search + library drawer + count badges.** A "find an instruction…" box filters the tray buttons by name. The four library panels now open as a right-side drawer instead of a centered popup, and their tab buttons show live counts (e.g. "Prompt Triggers (3)").
     - **24. Tray dock: left by default, switchable to bottom.** At Tim's direction, the instruction tray ("node list") now docks as a permanent full-height column on the LEFT instead of the fixed bottom bar; ◀ Left / ▼ Bottom buttons in the tray header switch it, the choice persists across visits, and the tray's collapse toggle folds the column to a slim rail.
 
+25. **Quick-add Load Image + image picker on load items (Editor, Nov 13, 2026).** Tim's actual need was loading an existing picture (his live in the iOS Photos app), not generating one. Quick Add gains "＋ 📥 Load Image" (adds a Load Image item) alongside Still Image (which still adds a Prompt — a lone Prompt is how Draw Things creates a still). Load Image, Load Mask, and Add to Moodboard items gain a "🖼️ Pick…" button: it opens the system photo/file picker, fills the item's path with the picked file's name, and shows a thumbnail so you can confirm the right picture. Honest limit, stated in the items' help text: a browser picker can't copy the file anywhere — the image must be a PNG in Draw Things' Pictures folder under that name at run time (on iPad: import the photo in Draw Things, then Save it with a name; Photos-app pictures have no file path of their own).
+
 Every fix is marked in the code with a `[Tim edition fix]` comment next to the changed lines, so the changes are easy to find, review, or revert.
 
 ## Validation done

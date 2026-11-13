@@ -1111,6 +1111,8 @@ body.tray-left #fixed-instructions-bar.tray-collapsed .speed-rail-items,
 body.tray-left #fixed-instructions-bar.tray-collapsed .dock-switch,
 body.tray-left #fixed-instructions-bar.tray-collapsed #traySearch { display: none; }
 .tim-footer { text-align: center; opacity: 0.75; font-size: 0.9em; margin: 18px 0 90px; }
+.pick-image-btn { margin-left: 8px; border: 1px solid var(--border-color); background: transparent; color: inherit; border-radius: 8px; padding: 3px 9px; cursor: pointer; font-weight: 600; white-space: nowrap; }
+.pick-image-thumb { max-height: 64px; max-width: 96px; border-radius: 6px; margin-left: 8px; vertical-align: middle; }
     </style>
 <!-- iOS / Apple Home Screen Icons & App Mode -->
 <link rel="apple-touch-icon" sizes="180x180" href="https://cutsceneartist.com/DrawThings/app-icons/icon-180.png">
@@ -1217,7 +1219,8 @@ body.tray-left #fixed-instructions-bar.tray-collapsed #traySearch { display: non
     <div class="quick-add-bar">
         <span class="quick-add-label">Quick add:</span>
         <button class="btn-template" onclick="addVideoScene()" title="Adds Add Text + Length from Dialogue + Prompt — one complete video scene">＋ 🎬 Video Scene</button>
-        <button class="btn-template" onclick="addStillImage()" title="Adds a single Prompt item — one still image">＋ 🖼️ Still Image</button>
+        <button class="btn-template" onclick="addStillImage()" title="Adds a single Prompt item — Draw Things creates one still image from your text">＋ 🖼️ Still Image</button>
+        <button class="btn-template" onclick="addLoadImage()" title="Adds a Load Image item — brings in an existing picture file from Draw Things' Pictures folder">＋ 📥 Load Image</button>
     </div>
     <div id="renderGuard" class="render-guard" style="display:none"></div>
 
@@ -1503,7 +1506,7 @@ const ITEM_HELP = {
     maskBkgd: "Sets the mask to the detected background.",
     maskFG: "Sets the mask to the detected foreground.",
     maskBody: "Builds a mask from body parts (upper/lower/clothes/neck) + grow pixels.",
-    maskLoad: "Loads a mask image from Pictures.",
+    maskLoad: "Loads a mask image from Pictures. 🖼️ Pick fills in the name from a photo/file — the image must be a PNG in Draw Things' Pictures folder.",
     maskAsk: "Answer model finds the named thing; its box becomes the mask.",
     depthToCanvas: "Copies the depth layer back onto the canvas.",
     depthCanvas: "Copies the canvas picture into the depth layer as-is.",
@@ -1530,8 +1533,8 @@ const ITEM_HELP = {
     moodboardRemove: "Removes a moodboard image by index (starts at 0).",
     canvasSave: "Saves the WHOLE canvas as PNG to Pictures (folder must exist; overwrites same-name).",
     canvasSaveArea: "Saves only the visible render area as PNG to Pictures.",
-    canvasLoad: "Loads an image from Pictures onto the canvas (clears + scales to render size).",
-    moodboardAdd: "Loads an image from Pictures onto the moodboard.",
+    canvasLoad: "Loads an image from Pictures onto the canvas (clears + scales to render size). 🖼️ Pick fills in the name from a photo/file — the image must be a PNG in Draw Things' Pictures folder (in Draw Things: import the photo, then Save it with a name).",
+    moodboardAdd: "Loads an image from Pictures onto the moodboard. 🖼️ Pick fills in the name from a photo/file — the image must be a PNG in Draw Things' Pictures folder.",
     loopAddMB: "Loop only: each pass adds the NEXT image from this folder to the moodboard.",
     loopLoad: "Loop only: each pass loads the NEXT image from this folder.",
     loopLoadMask: "Loop only: each pass loads the NEXT mask from this folder (pairs with Load Image).",
@@ -2181,8 +2184,44 @@ dragHandle.addEventListener("touchend", handleTouchEnd, { passive: false });
             input.placeholder = cfg.placeholder;
             input.value = itemObj.value || "";
             input.addEventListener("input", () => updatePreview());
-            
+
             el.appendChild(input);
+
+            // [Tim edition] Image picker for the load-an-image items: pick
+            // from Photos/Files instead of typing the path. Fills in the
+            // file's name and shows a thumbnail so you can confirm it's the
+            // right picture. The image itself still has to live in Draw
+            // Things' Pictures folder under that name at run time — a
+            // browser picker can't copy it there.
+            if (["canvasLoad", "maskLoad", "moodboardAdd"].includes(itemObj.type)) {
+                const fileInput = document.createElement("input");
+                fileInput.type = "file";
+                fileInput.accept = "image/*";
+                fileInput.style.display = "none";
+                const pickBtn = document.createElement("button");
+                pickBtn.type = "button";
+                pickBtn.className = "pick-image-btn";
+                pickBtn.textContent = "🖼️ Pick…";
+                pickBtn.title = "Pick an image from Photos or Files — fills in its file name";
+                const thumb = document.createElement("img");
+                thumb.className = "pick-image-thumb";
+                thumb.alt = "";
+                thumb.style.display = "none";
+                pickBtn.addEventListener("click", () => fileInput.click());
+                fileInput.addEventListener("change", () => {
+                    const file = fileInput.files && fileInput.files[0];
+                    if (!file) return;
+                    input.value = file.name;
+                    try {
+                        thumb.src = URL.createObjectURL(file);
+                        thumb.style.display = "";
+                    } catch (e) { /* preview is a nicety, not required */ }
+                    updatePreview();
+                });
+                el.appendChild(pickBtn);
+                el.appendChild(fileInput);
+                el.appendChild(thumb);
+            }
             el.dataset.valueType = "string";
             container.appendChild(el);
         } else {
@@ -3158,6 +3197,9 @@ function addVideoScene() {
 }
 function addStillImage() {
     addItem("prompt");
+}
+function addLoadImage() {
+    addItem("canvasLoad");
 }
 
 /* Tray search: filter the instruction buttons by name. */
