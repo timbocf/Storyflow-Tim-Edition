@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <title>Storyflow Editor for DrawThings</title>
+    <title>Storyflow — Tim Edition for Draw Things</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="StoryFlow">
@@ -1054,6 +1054,63 @@ textarea::placeholder {
     flex-wrap: wrap; /* Allows injected warning element to drop to a new line */
 }
 
+/* ============================================================
+   [Tim edition] UI redesign — branding, sticky bar, family
+   colors, loop brackets, collapse, tray dock (left/bottom),
+   library drawer, quick-add + guard
+   ============================================================ */
+.app-version { background: #0e7c86; color: #fff; border-radius: 10px; padding: 1px 8px; font-weight: 600; }
+.action-bar { position: sticky; top: 0; z-index: 900; background: var(--bg-secondary); border-bottom: 2px solid var(--border-color); }
+.render-counter { font-weight: 700; padding: 4px 10px; border: 2px solid #0e7c86; border-radius: 10px; color: #0e7c86; white-space: nowrap; }
+.tab-count { font-weight: 700; opacity: 0.85; }
+.quick-add-bar { display: flex; gap: 8px; align-items: center; margin: 10px 0 4px; flex-wrap: wrap; }
+.quick-add-label { font-weight: 600; opacity: 0.8; }
+.btn-template { border: 2px dashed #0e7c86; background: transparent; color: inherit; border-radius: 10px; padding: 6px 12px; font-weight: 600; cursor: pointer; }
+.btn-template:hover { background: rgba(14,124,134,0.12); }
+.render-guard { border: 2px solid #d97706; background: rgba(217,119,6,0.12); border-radius: 10px; padding: 10px 12px; margin: 8px 0; }
+.render-guard button { margin-left: 10px; font-weight: 700; cursor: pointer; }
+/* item family color bands */
+.item { border-left: 5px solid #95a5a6; }
+.item.fam-prompt { border-left-color: #4a90d9; }
+.item.fam-video { border-left-color: #9b59b6; }
+.item.fam-mask { border-left-color: #27ae60; }
+.item.fam-file { border-left-color: #e67e22; }
+.item.fam-flow { border-left-color: #e74c3c; }
+.item.fam-config { border-left-color: #95a5a6; }
+.item.fam-canvas { border-left-color: #16a085; }
+.item.fam-mood { border-left-color: #b7950b; }
+.item.fam-note { border-left-color: #cccccc; }
+/* loop brackets */
+.item.in-loop { margin-left: 22px; }
+.item.loop-unmatched { outline: 2px dashed #e74c3c; outline-offset: -2px; }
+/* move + collapse buttons */
+.move-btn, .collapse-btn { background: none; border: none; cursor: pointer; font-size: 15px; padding: 2px 4px; opacity: 0.75; }
+.move-btn:hover, .collapse-btn:hover { opacity: 1; }
+.item.item-collapsed > *:not(.drag-handle):not(.item-index):not(.item-type-label):not(.dup-btn):not(.delete-btn):not(.move-btn):not(.collapse-btn) { display: none !important; }
+/* tray search + dock switch */
+#traySearch { border-radius: 8px; border: 1px solid var(--border-color); padding: 4px 8px; min-width: 150px; }
+.dock-switch { display: inline-flex; gap: 4px; margin: 0 6px; }
+.dock-switch button { border: 1px solid var(--border-color); background: transparent; color: inherit; border-radius: 8px; padding: 3px 8px; cursor: pointer; font-weight: 600; }
+.dock-switch button.dock-active { background: #0e7c86; color: #fff; border-color: #0e7c86; }
+/* libraries open as a right-side drawer instead of a centered popup */
+.tab-content { justify-content: flex-end; padding-top: 0; }
+.tab-overlay-card { height: 100vh; max-height: 100vh; width: min(620px, 94vw); border-radius: 0; overflow-y: auto; }
+/* tray docked LEFT (Tim's default): a permanent full-height column */
+body { transition: padding-left 0.3s ease, padding-bottom 0.3s ease; }
+body.tray-left { padding-left: 308px; padding-bottom: 12px; }
+body.tray-left #fixed-instructions-bar { top: 0; bottom: 0; left: 0; right: auto; width: 292px; height: auto !important; border-top: none; border-right: 2px solid var(--border-color); box-shadow: 3px 0 10px rgba(0,0,0,0.15); }
+body.tray-left #fixed-instructions-bar .tray-content { overflow-y: auto; flex: 1 1 auto; }
+body.tray-left .tray-header { flex-wrap: wrap; }
+body.tray-left .speed-rail-items { flex-wrap: wrap; }
+body.tray-left .tray-category-tabs { flex-wrap: wrap; }
+body.tray-left:has(#fixed-instructions-bar.tray-collapsed) { padding-left: 60px; }
+body.tray-left #fixed-instructions-bar.tray-collapsed { width: 46px; }
+body.tray-left #fixed-instructions-bar.tray-collapsed .tray-content,
+body.tray-left #fixed-instructions-bar.tray-collapsed .tray-category-tabs,
+body.tray-left #fixed-instructions-bar.tray-collapsed .speed-rail-items,
+body.tray-left #fixed-instructions-bar.tray-collapsed .dock-switch,
+body.tray-left #fixed-instructions-bar.tray-collapsed #traySearch { display: none; }
+.tim-footer { text-align: center; opacity: 0.75; font-size: 0.9em; margin: 18px 0 90px; }
     </style>
 <!-- iOS / Apple Home Screen Icons & App Mode -->
 <link rel="apple-touch-icon" sizes="180x180" href="https://cutsceneartist.com/DrawThings/app-icons/icon-180.png">
@@ -1062,9 +1119,7 @@ textarea::placeholder {
 <meta name="apple-mobile-web-app-title" content="Storyflow">
 
 <!-- Standard Web App Icons & Manifest -->
-<link rel="icon" type="image/png" sizes="192x192" href="https://cutsceneartist.com/DrawThings/app-icons/icon-192.png">
-<link rel="icon" type="image/png" sizes="512x512" href="https://cutsceneartist.com/DrawThings/app-icons/icon-512.png">
-<link rel="manifest" href="https://cutsceneartist.com/DrawThings/manifest.json">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230e7c86'/%3E%3Ctext x='32' y='44' font-size='36' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'%3ET%3C/text%3E%3C/svg%3E">
 </head>
 
 <body>
@@ -1073,7 +1128,7 @@ textarea::placeholder {
         <label>Storyflow
             <input type="text" id="projectName" placeholder="Enter project name" oninput="updatePreview()">
         </label>
-        <span class="app-version">261101</span>
+        <span class="app-version">Tim Edition 1.0 · based on Storyflow 261101 by wetcircuit</span>
     </div>
     <nav class="app-header-nav">
         <a href="docs/" class="app-button secondary-action">📖 Documentation</a>
@@ -1091,21 +1146,22 @@ textarea::placeholder {
 
 <div class="section action-bar">
     <button class="btn-project" onclick="newProject()">🆕 New Project</button>
-    <button class="btn-saveProject" onclick="saveProject()">💾 Save Project</button>
-    <button class="btn-project" onclick="loadProject()">📂 Load Project</button>
+    <button class="btn-saveProject" onclick="saveProject()">💾 Save Project File</button>
+    <button class="btn-project" onclick="loadProject()">📂 Open a Saved Project</button>
     <button class="btn-project" id="undoBtn" onclick="undoLast()" title="Undo the last list change (add, delete, duplicate, reorder, load, new)">↩️ Undo</button>
-    <button class="btn-project" onclick="exportTextfile()">⬇️ Export to Pipeline</button>
-    <button class="btn-project" onclick="exportClipboard(this)">📋 Export to Clipboard</button>
+    <button class="btn-project" onclick="exportTextfile()">⬇️ Download for Draw Things</button>
+    <button class="btn-project" onclick="exportClipboard(this)">📋 Copy for Draw Things</button>
+    <span id="renderCounter" class="render-counter" title="Items that will actually render — the same count the Pipeline reports as 'number of renders'">🎬 Renders: 0</span>
 </div>
 
 <div class="tab-container section">
     <!-- Tab Navigation with 6 Tabs -->
     <div class="tab-nav">
         <button id="defaultOpen" class="tab-button active" onclick="openTab(event, 'tab-storyflow')">Instruction List</button>
-        <button class="tab-button" onclick="openTab(event, 'tab-triggers')">Prompt Triggers</button>
-        <button class="tab-button" onclick="openTab(event, 'tab-shortcuts')">Config Shortcuts</button>
-        <button class="tab-button" onclick="openTab(event, 'tab-wildcards')">Wildcards</button>
-        <button class="tab-button" onclick="openTab(event, 'tab-poses')">JSON Poses</button>
+        <button class="tab-button" onclick="openTab(event, 'tab-triggers')">Prompt Triggers <span class="tab-count" id="count-triggers"></span></button>
+        <button class="tab-button" onclick="openTab(event, 'tab-shortcuts')">Config Shortcuts <span class="tab-count" id="count-shortcuts"></span></button>
+        <button class="tab-button" onclick="openTab(event, 'tab-wildcards')">Wildcards <span class="tab-count" id="count-wildcards"></span></button>
+        <button class="tab-button" onclick="openTab(event, 'tab-poses')">JSON Poses <span class="tab-count" id="count-poses"></span></button>
         <button class="tab-button" onclick="openTab(event, 'tab-preview')">Preview</button>
     </div>
 
@@ -1157,7 +1213,17 @@ textarea::placeholder {
     </div>
 </div>
 
+    <!-- [Tim edition] quick-add templates + the no-renders guard -->
+    <div class="quick-add-bar">
+        <span class="quick-add-label">Quick add:</span>
+        <button class="btn-template" onclick="addVideoScene()" title="Adds Add Text + Length from Dialogue + Prompt — one complete video scene">＋ 🎬 Video Scene</button>
+        <button class="btn-template" onclick="addStillImage()" title="Adds a single Prompt item — one still image">＋ 🖼️ Still Image</button>
+    </div>
+    <div id="renderGuard" class="render-guard" style="display:none"></div>
+
     <div id="itemtList" aria-live="polite"></div>
+
+    <footer class="tim-footer">Storyflow — Tim Edition · a fork of Storyflow 261101 by wetcircuit (Cutscene Artist) · Pipeline fixes and UI redesign listed in the Documentation</footer>
 
     <!-- BUTTONS TRAY -->
 <div id="fixed-instructions-bar" class="tray-collapsed" data-category="all">
@@ -1175,7 +1241,7 @@ textarea::placeholder {
 
                 <button class="btn-prompt" draggable="true" ondragstart="handleNewItemDragStart(event, 'prompt')" onclick="addItem('prompt')">+ Prompt</button>
 
-                <button class="btn-frames" draggable="true" ondragstart="handleNewItemDragStart(event, 'framesDialog')" onclick="addItem('framesDialog')">+<span style="margin: 0 4px;">💬</span></button>
+                <button class="btn-frames" draggable="true" ondragstart="handleNewItemDragStart(event, 'framesDialog')" onclick="addItem('framesDialog')">+ 💬 Length from Dialogue</button>
 
                 <button class="btn-canvas" draggable="true" ondragstart="handleNewItemDragStart(event, 'crop')" onclick="addItem('crop')">+ Crop Image</button>
 
@@ -1183,6 +1249,11 @@ textarea::placeholder {
 </div>
         
         <div class="tray-controls">
+            <input type="text" id="traySearch" placeholder="find an instruction…" oninput="filterTraySearch(this.value)" title="Filter the instruction buttons by name">
+            <span class="dock-switch" title="Where the instruction list (tray) sits">
+                <button type="button" id="dockLeftBtn" onclick="setTrayDock('left')">◀ Left</button>
+                <button type="button" id="dockBottomBtn" onclick="setTrayDock('bottom')">▼ Bottom</button>
+            </span>
             <button class="btn-tray-toggle" id="trayToggleBtn" onclick="toggleTrayState()">
                 ▲ (Click to Expand)
             </button>
@@ -1208,12 +1279,12 @@ textarea::placeholder {
             <!-- Prompts -->
             <div class="button-group" data-category="prompts">
                 <button class="btn-prompt" draggable="true" ondragstart="handleNewItemDragStart(event, 'prompt')" onclick="addItem('prompt')">+ Prompt</button>
-                <button class="btn-prompt" draggable="true" ondragstart="handleNewItemDragStart(event, 'concat')" onclick="addItem('concat')">+ Concat</button>
+                <button class="btn-prompt" draggable="true" ondragstart="handleNewItemDragStart(event, 'concat')" onclick="addItem('concat')">+ Add Text (Concat)</button>
                 <button class="btn-prompt" draggable="true" ondragstart="handleNewItemDragStart(event, 'wildcard')" onclick="addItem('wildcard')">+ Wildcard</button>
                 <button class="btn-prompt" draggable="true" ondragstart="handleNewItemDragStart(event, 'interrogate')" onclick="addItem('interrogate')">+ Interrogate</button>
                 <button class="btn-prompt" draggable="true" ondragstart="handleNewItemDragStart(event, 'enhance')" onclick="addItem('enhance')">+ Enhance</button>
                 <button class="btn-prompt" draggable="true" ondragstart="handleNewItemDragStart(event, 'prefix')" onclick="addItem('prefix')">+ Prefix</button>
-                <button class="btn-prompt" draggable="true" ondragstart="handleNewItemDragStart(event, 'getPrompt')" onclick="addItem('getPrompt')">+ Get</button>
+                <button class="btn-prompt" draggable="true" ondragstart="handleNewItemDragStart(event, 'getPrompt')" onclick="addItem('getPrompt')">+ Get Prompt</button>
                 <button class="btn-prompt" draggable="true" ondragstart="handleNewItemDragStart(event, 'negPrompt')" onclick="addItem('negPrompt')">+ Negative</button>
             </div>
 
@@ -1224,10 +1295,10 @@ textarea::placeholder {
                 <button class="btn-special" draggable="true" ondragstart="handleNewItemDragStart(event, 'canvasSave')" onclick="addItem('canvasSave')">+ Save Full</button>
                 <button class="btn-special" draggable="true" ondragstart="handleNewItemDragStart(event, 'canvasLoad')" onclick="addItem('canvasLoad')">+ Load</button>
                 <button class="btn-note" draggable="true" ondragstart="handleNewItemDragStart(event, 'swapCanvas')" onclick="addItem('swapCanvas')">+ Swap</button>
-                <button class="btn-frames" draggable="true" ondragstart="handleNewItemDragStart(event, 'frames')" onclick="addItem('frames')">+ Wan</button>
-                <button class="btn-frames" draggable="true" ondragstart="handleNewItemDragStart(event, 'frames8')" onclick="addItem('frames8')">+ LTX</button>
-                <button class="btn-frames" draggable="true" ondragstart="handleNewItemDragStart(event, 'frames17')" onclick="addItem('frames17')">+ H3</button>
-                <button class="btn-frames" draggable="true" ondragstart="handleNewItemDragStart(event, 'framesDialog')" onclick="addItem('framesDialog')">+<span style="margin: 0 4px;">💬</span></button>
+                <button class="btn-frames" draggable="true" ondragstart="handleNewItemDragStart(event, 'frames')" onclick="addItem('frames')">+ Frames: Wan</button>
+                <button class="btn-frames" draggable="true" ondragstart="handleNewItemDragStart(event, 'frames8')" onclick="addItem('frames8')">+ Frames: LTX</button>
+                <button class="btn-frames" draggable="true" ondragstart="handleNewItemDragStart(event, 'frames17')" onclick="addItem('frames17')">+ Frames: H3</button>
+                <button class="btn-frames" draggable="true" ondragstart="handleNewItemDragStart(event, 'framesDialog')" onclick="addItem('framesDialog')">+ 💬 Length from Dialogue</button>
             </div>
 
             <!-- Config -->
@@ -1255,9 +1326,9 @@ textarea::placeholder {
             <!-- Moodboard -->
             <div class="button-group" data-category="moodboard">
                 <button class="btn-moodboard" draggable="true" ondragstart="handleNewItemDragStart(event, 'moodboardClear')" onclick="addItem('moodboardClear')">+ Clear Moodboard</button>
-                <button class="btn-moodboard" draggable="true" ondragstart="handleNewItemDragStart(event, 'moodboardCanvas')" onclick="addItem('moodboardCanvas')">+ Canvas to MB</button>
-                <button class="btn-moodboard" draggable="true" ondragstart="handleNewItemDragStart(event, 'moodboardAdd')" onclick="addItem('moodboardAdd')">+ Add MB</button>
-                <button class="btn-moodboard" draggable="true" ondragstart="handleNewItemDragStart(event, 'moodboardRemove')" onclick="addItem('moodboardRemove')">+ Remove MB</button>
+                <button class="btn-moodboard" draggable="true" ondragstart="handleNewItemDragStart(event, 'moodboardCanvas')" onclick="addItem('moodboardCanvas')">+ Canvas to Moodboard</button>
+                <button class="btn-moodboard" draggable="true" ondragstart="handleNewItemDragStart(event, 'moodboardAdd')" onclick="addItem('moodboardAdd')">+ Add to Moodboard</button>
+                <button class="btn-moodboard" draggable="true" ondragstart="handleNewItemDragStart(event, 'moodboardRemove')" onclick="addItem('moodboardRemove')">+ Remove from Moodboard</button>
                 <button class="btn-moodboard" draggable="true" ondragstart="handleNewItemDragStart(event, 'moodboardWeights')" onclick="addItem('moodboardWeights')">+ MB Weights</button>
                 <button class="btn-loop" draggable="true" ondragstart="handleNewItemDragStart(event, 'loopAddMB')" onclick="addItem('loopAddMB')">+ Add⒤ MB</button>
             </div>
@@ -1314,7 +1385,7 @@ function formatTypeLabel(type) {
   const map = {
     note: "note",
     prompt: "prompt",
-    concat: "concat",
+    concat: "concat — add text",
     prefix: "prefix",
     wildcard: "wildcard",
     interrogate: "interrogate",
@@ -1330,7 +1401,7 @@ function formatTypeLabel(type) {
     frames: "frames Wan",
     frames8: "frames LTX",
     frames17: "frames H3",
-    framesDialog: "frames by dialog",
+    framesDialog: "frames by dialog — auto length 💬",
     negPrompt: "negative prompt",
     faceZoom: "face zoom",
     askZoom: "ask zoom",
@@ -1391,6 +1462,23 @@ function parseJSONSafely(str, fallback) {
    Shown under the type label on every item — the original Editor's only
    help was placeholder text inside empty fields.
    =========================== */
+/* [Tim edition] item families — drive the color band on each item so a
+   long list is scannable by kind at a glance. */
+const ITEM_FAMILY = (() => {
+    const fam = {};
+    const put = (family, types) => types.forEach(t => { fam[t] = family; });
+    put("prompt", ["prompt", "concat", "prefix", "wildcard", "negPrompt", "interrogate", "enhance", "getPrompt", "approve"]);
+    put("video", ["frames", "frames8", "frames17", "framesDialog"]);
+    put("mask", ["maskClear", "maskLoad", "maskGet", "maskBkgd", "maskFG", "maskBody", "maskAsk"]);
+    put("file", ["canvasSave", "canvasSaveArea", "canvasLoad", "fileLoad", "loopLoad", "loopSave", "loopLoadMask"]);
+    put("flow", ["loop", "loopEnd"]);
+    put("canvas", ["canvasClear", "swapCanvas", "crop", "faceZoom", "askZoom", "moveScale", "adaptSize", "matte", "removeBkgd", "depthExtract", "depthCanvas", "depthToCanvas"]);
+    put("mood", ["moodboardClear", "moodboardCanvas", "moodboardAdd", "moodboardLoad", "moodboardRemove", "moodboardWeights", "loopAddMB"]);
+    put("note", ["note"]);
+    return fam;
+})();
+function itemFamily(type) { return ITEM_FAMILY[type] || "config"; }
+
 const ITEM_HELP = {
     prompt: "Renders. Final prompt = concat bucket + this text; bucket empties after.",
     concat: "Adds its text to the concat bucket being built for the next Prompt.",
@@ -1982,7 +2070,7 @@ function resolveposeJSONShortcuts(text) {
    =========================== */
 function createItemElement(itemObj = { type: "prompt", value: "" }, skipUpdate = false) {
     const container = document.createElement("div");
-    container.className = "item";
+    container.className = "item fam-" + itemFamily(itemObj.type); // [Tim edition] family color band
     container.draggable = false;
     container.dataset.type = itemObj.type;
 
@@ -2237,6 +2325,31 @@ dupBtn.textContent = "⧉";
 dupBtn.title = "Duplicate item";
 dupBtn.onclick = () => duplicateItem(container);
 container.appendChild(dupBtn);
+
+// [Tim edition] move up/down buttons (an alternative to dragging, which
+// is finicky on the iPad) and a collapse toggle that folds the item to
+// its header row.
+const upBtn = document.createElement("button");
+upBtn.className = "move-btn";
+upBtn.textContent = "⬆";
+upBtn.title = "Move item up";
+upBtn.onclick = () => moveItem(container, -1);
+container.appendChild(upBtn);
+const downBtn = document.createElement("button");
+downBtn.className = "move-btn";
+downBtn.textContent = "⬇";
+downBtn.title = "Move item down";
+downBtn.onclick = () => moveItem(container, 1);
+container.appendChild(downBtn);
+const collapseBtn = document.createElement("button");
+collapseBtn.className = "collapse-btn";
+collapseBtn.textContent = "▾";
+collapseBtn.title = "Collapse / expand this item";
+collapseBtn.onclick = () => {
+    container.classList.toggle("item-collapsed");
+    collapseBtn.textContent = container.classList.contains("item-collapsed") ? "▸" : "▾";
+};
+container.appendChild(collapseBtn);
 
 // Delete Button
 const delBtn = document.createElement("button");
@@ -2681,9 +2794,58 @@ function updatePreview() {
 
     // [Tim edition] JSON validation: mark bad items in the list itself
     const invalidJsonItems = findInvalidJsonItems(items);
-    document.querySelectorAll("#itemtList .item").forEach((el, i) => {
+    const itemEls = document.querySelectorAll("#itemtList .item");
+    itemEls.forEach((el, i) => {
         el.classList.toggle("invalid-json", invalidJsonItems.includes(i + 1));
     });
+
+    // [Tim edition] Loop brackets: items inside a loop get indented under
+    // it; an End Loop with no Loop (or a Loop never closed) is flagged.
+    const loopIssues = [];
+    let loopDepth = 0;
+    itemEls.forEach((el, i) => {
+        const t = el.dataset.type;
+        el.classList.remove("in-loop", "loop-unmatched");
+        if (t === "loop") { loopDepth++; }
+        else if (t === "loopEnd") {
+            if (loopDepth === 0) { el.classList.add("loop-unmatched"); loopIssues.push(`item ${i + 1} is an End Loop with no Loop above it`); }
+            else loopDepth--;
+        } else if (loopDepth > 0) { el.classList.add("in-loop"); }
+    });
+    if (loopDepth > 0) loopIssues.push("a Loop is never closed — add an End Loop below it");
+
+    // [Tim edition] Renders counter + no-renders guard, using the
+    // Pipeline's own counting rule (prompt items, plus Frames by Dialog
+    // items with Generate checked).
+    let renderCount = 0;
+    items.forEach(it => {
+        if (it.type === "prompt") renderCount++;
+        else if (it.type === "framesDialog") {
+            const v = parseJSONSafely(it.value, {});
+            if (v && v.generate) renderCount++;
+        }
+    });
+    const counterEl = document.getElementById("renderCounter");
+    if (counterEl) counterEl.textContent = `🎬 Renders: ${renderCount}`;
+    const guardEl = document.getElementById("renderGuard");
+    if (guardEl) {
+        if (renderCount === 0 && items.length > 0) {
+            guardEl.style.display = "";
+            guardEl.innerHTML = "";
+            const msg = document.createElement("span");
+            msg.textContent = items.length === 1 && items[0].type === "note"
+                ? "Nothing here will render yet. Your words need a Prompt item — Notes are ignored by the Pipeline."
+                : "⚠️ Nothing in this project will render — the Pipeline will report “number of renders: 0”. Text items only fill the bucket; a Prompt item is what renders it.";
+            const addBtn = document.createElement("button");
+            addBtn.textContent = "＋ Add a Prompt";
+            addBtn.onclick = () => addItem("prompt");
+            guardEl.appendChild(msg);
+            guardEl.appendChild(addBtn);
+        } else {
+            guardEl.style.display = "none";
+        }
+    }
+    updateTabBadges();
     let promptCount = 0;
     // [Tim edition fix] Preview totals were computed with a running
     // subtraction that only came out right for a single frames item, and
@@ -2711,6 +2873,10 @@ function updatePreview() {
     if (invalidJsonItems.length) {
         output += `⚠️ Invalid JSON in item(s): ${invalidJsonItems.join(", ")} — marked ⚠ in the list. Export is blocked until fixed.\n`;
     }
+    if (loopIssues.length) {
+        output += `⚠️ Loop problem: ${loopIssues.join("; ")}.\n`;
+    }
+    output += `Renders: ${renderCount} (Prompt items + dialogue items with Generate on)\n`;
 
     if (framesTotal > 0) {
         output += `Wan Frames Total: ${framesTotal} (${(framesTotal / 16).toFixed(2)} sec)\n`;
@@ -2970,6 +3136,78 @@ document.addEventListener("keydown", (e) => {
 });
 
 /* ---------- Duplicate ---------- */
+/* ===========================
+   [Tim edition] UI redesign helpers
+   =========================== */
+function moveItem(el, dir) {
+    const sibling = dir < 0 ? el.previousElementSibling : el.nextElementSibling;
+    if (!sibling) return;
+    pushUndoSnapshot();
+    if (dir < 0) el.parentNode.insertBefore(el, sibling);
+    else el.parentNode.insertBefore(sibling, el);
+    updatePreview();
+}
+
+/* Quick-add templates: the correct structure as one tap. A video scene is
+   Add Text (fills the bucket) + Length from Dialogue (sizes the clip) +
+   Prompt (renders and empties the bucket). */
+function addVideoScene() {
+    addItem("concat");
+    addItem("framesDialog");
+    addItem("prompt");
+}
+function addStillImage() {
+    addItem("prompt");
+}
+
+/* Tray search: filter the instruction buttons by name. */
+function filterTraySearch(query) {
+    const q = (query || "").trim().toLowerCase();
+    document.querySelectorAll("#fixed-instructions-bar .tray-content .button-group").forEach(group => {
+        let anyVisible = false;
+        group.querySelectorAll("button").forEach(btn => {
+            const show = !q || btn.textContent.toLowerCase().includes(q);
+            btn.style.display = show ? "" : "none";
+            if (show) anyVisible = true;
+        });
+        group.style.display = anyVisible ? "" : "none";
+    });
+    document.querySelectorAll("#fixed-instructions-bar .speed-rail-items button").forEach(btn => {
+        btn.style.display = (!q || btn.textContent.toLowerCase().includes(q)) ? "" : "none";
+    });
+}
+
+/* Tray dock: the instruction list lives at the LEFT by default (Tim's
+   call); the switch moves it back to the bottom bar. Persisted. */
+const TRAY_DOCK_KEY = "storyflowTimEdition.trayDock.v1";
+function setTrayDock(mode) {
+    const left = mode !== "bottom";
+    document.body.classList.toggle("tray-left", left);
+    try { localStorage.setItem(TRAY_DOCK_KEY, left ? "left" : "bottom"); } catch (e) {}
+    const l = document.getElementById("dockLeftBtn");
+    const b = document.getElementById("dockBottomBtn");
+    if (l) l.classList.toggle("dock-active", left);
+    if (b) b.classList.toggle("dock-active", !left);
+}
+function initTrayDock() {
+    let saved = "left";
+    try { saved = localStorage.getItem(TRAY_DOCK_KEY) || "left"; } catch (e) {}
+    setTrayDock(saved);
+}
+
+/* Library counts on the tab buttons. The dictionaries are synced from
+   their panels at the top of updatePreview, so call this after that. */
+function updateTabBadges() {
+    const set = (id, dict) => {
+        const el = document.getElementById(id);
+        if (el) { const n = Object.keys(dict || {}).length; el.textContent = n ? `(${n})` : ""; }
+    };
+    set("count-triggers", promptTriggers);
+    set("count-shortcuts", configShortcuts);
+    set("count-poses", poseJSONShortcuts);
+    set("count-wildcards", wildcardShortcuts);
+}
+
 function duplicateItem(sourceEl) {
     const els = [...document.querySelectorAll("#itemtList .item")];
     const idx = els.indexOf(sourceEl);
@@ -3181,7 +3419,11 @@ function loadProject() {
 /* ===========================
    New Project: clear DOM 
    =========================== */
-function newProject() {
+function newProject(skipConfirm = false) {
+    // [Tim edition] confirm before wiping a real project (boot calls pass
+    // true; the autosave + undo still protect the work either way).
+    const existing = document.querySelectorAll("#itemtList .item").length;
+    if (!skipConfirm && existing > 1 && !window.confirm("Start a new project? Your current one is autosaved in this browser, and Undo can bring it back.")) return;
     pushUndoSnapshot(); // [Tim edition] starting over is undoable
     document.getElementById("projectName").value = "";
     document.getElementById("triggerListPrompt").innerHTML = "";
@@ -3457,10 +3699,11 @@ function showManualCopyFallback(text) {
    Boot defaults
    =========================== */
 function boot() {
+  initTrayDock(); // [Tim edition] node list dock: left by default
   // [Tim edition] restore the autosaved project if there is one worth
   // restoring; otherwise start fresh as before.
   if (!restoreAutosave()) {
-    newProject();
+    newProject(true);
   }
   updatePreview();
 }
