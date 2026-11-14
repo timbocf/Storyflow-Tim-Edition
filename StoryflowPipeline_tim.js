@@ -148,6 +148,11 @@ function validateInstructionArray(arr) {
     }
     // 👇 FIX: Use the new allowedExtensions property for file path validation
     else if (rules.allowedExtensions) {
+      // [Tim edition fix] A baked-in photo (data URI) is not a file path and
+      // has no extension — Load Image / Add to Moodboard accept it as-is.
+      if ((key === "canvasLoad" || key === "moodboardAdd") && isEmbeddedImage(value)) {
+        continue;
+      }
       // 1. Get the file extension (case-insensitive)
       const extensionMatch = value.match(/\.(png|jpg|webp)$/i);
       let actualExtension = extensionMatch ? extensionMatch[1].toLowerCase() : null;
@@ -221,7 +226,11 @@ if (invalidTypes.length > 0) {
     // Check if the error is a file path error by looking for the "file path" string in the expected message
     if (expected.includes("file path")) {
         // Use a more specific file path error message
-        warnings.push(`Item ${index}: "${key}" - Invalid file path or extension. Expected ${expected.replace('a file path ending in one of: ', '')} but got "${actual}"`);
+        // [Tim edition fix] never quote a huge value (e.g. a baked-in photo's
+        // data) into the report — the first preflight of an embedded project
+        // filled the whole dialog with base64.
+        const shownActual = typeof actual === "string" && actual.length > 80 ? actual.slice(0, 80) + "…" : actual;
+        warnings.push(`Item ${index}: "${key}" - Invalid file path or extension. Expected ${expected.replace('a file path ending in one of: ', '')} but got "${shownActual}"`);
     } else {
         // This handles standard type mismatches (string, object, number, etc.)
         warnings.push(`Item ${index}: "${key}" - Expected ${expected} but got ${actual}`);
