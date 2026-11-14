@@ -33,6 +33,8 @@
     /* Interactive Elements */
     --primary-color: #4AA1D3;
     --primary-hover: #5991A6;
+    --nav-link: #07363f; /* [Tim edition fix] header links: dark enough to read on the day background */
+    --nav-link-hover: #000000;
     --btn-bg: #E3DDDC;
     --btn-hover: #DAD5CF;
     --btn-border: rgba(50, 50, 50, 0.3);
@@ -274,6 +276,21 @@ body[data-theme="cyberpunk"] {
 
 .secondary-action:hover {
     color: var(--primary-hover);
+}
+
+/* [Tim edition fix] The header nav links used the light-blue primary color
+   at font-weight 200 — nearly invisible on the day theme's light background.
+   In the day theme they now use a dark teal (see --nav-link in the day
+   block); other themes keep their primary color. All themes get a heavier
+   weight so the small text reads. */
+.app-header-nav .secondary-action {
+    color: var(--nav-link, var(--primary-color));
+    font-weight: 600;
+}
+
+.app-header-nav .secondary-action:hover {
+    color: var(--nav-link-hover, var(--primary-hover));
+    text-decoration: underline;
 }
 
         body { 
