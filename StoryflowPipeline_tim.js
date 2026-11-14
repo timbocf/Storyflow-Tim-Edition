@@ -635,6 +635,24 @@ function promptUserToSwapCanvasImage() {
 }
 
 
+// [Tim edition fix] File-loading instructions died with Draw Things'
+// native "Cannot access file" exception and a stack trace when the named
+// file wasn't in the Pictures folder — the common case on iPad, where a
+// name picked in the Editor (from Photos) doesn't put the file there.
+// Catch it and say what actually has to happen, in plain words.
+function loadPictureFile(kindLabel, fileName, action) {
+  try {
+    action();
+  } catch (e) {
+    throw new Error(
+      `Storyflow stopped: ${kindLabel} could not open "${fileName}" in Draw Things' Pictures folder. ` +
+      `The file itself has to be IN that folder — a name by itself (for example, one picked from Photos in the Editor) is not enough. ` +
+      `To put it there: import the picture onto the canvas in Draw Things, then run a one-item Storyflow project with Save Full Image using this same name. ` +
+      `(Draw Things said: ${e && e.message ? e.message : e})`
+    );
+  }
+}
+
 function adaptAndResetCanvas(maxWidth, maxHeight) {
     // Get the dimensions of the loaded image via boundingBox
 
@@ -1397,7 +1415,7 @@ for (let i = 0; i < instructions.length; i++) {
       // update config before Loading canvas png
       canvas.updateCanvasSize(configuration);
       Pvalue = picturesPath + "/" + value;
-      canvas.loadImage(Pvalue);
+      loadPictureFile("Load Image", value, () => canvas.loadImage(Pvalue)); // [Tim edition fix] plain-words error if the file isn't in Pictures
       __dtSleep(sleep);
       break;
 
@@ -1450,7 +1468,7 @@ for (let i = 0; i < instructions.length; i++) {
     case "moodboardAdd":
       // add to moodboard from file
       Pvalue = "file://" + picturesPath + "/" + value;
-      canvas.addToMoodboardFromSrc([Pvalue]);
+      loadPictureFile("Add to Moodboard", value, () => canvas.addToMoodboardFromSrc([Pvalue])); // [Tim edition fix] plain-words error if the file isn't in Pictures
       __dtSleep(0.2);
       break;
 
@@ -1488,7 +1506,7 @@ for (let i = 0; i < instructions.length; i++) {
     case "maskLoad":
       // load mask from path logic
       Pvalue = "file://" + picturesPath + "/" + value;
-      canvas.loadMaskFromSrc(Pvalue);
+      loadPictureFile("Load Mask", value, () => canvas.loadMaskFromSrc(Pvalue)); // [Tim edition fix] plain-words error if the file isn't in Pictures
       // [Tim edition fix] the loaded file is now the mask: drop any stale
       // internal mask so generate() can't override the file at render time,
       // and remember the source so maskGet can find it.

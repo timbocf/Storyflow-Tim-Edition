@@ -1113,6 +1113,7 @@ body.tray-left #fixed-instructions-bar.tray-collapsed #traySearch { display: non
 .tim-footer { text-align: center; opacity: 0.75; font-size: 0.9em; margin: 18px 0 90px; }
 .pick-image-btn { margin-left: 8px; border: 1px solid var(--border-color); background: transparent; color: inherit; border-radius: 8px; padding: 3px 9px; cursor: pointer; font-weight: 600; white-space: nowrap; }
 .pick-image-thumb { max-height: 64px; max-width: 96px; border-radius: 6px; margin-left: 8px; vertical-align: middle; }
+.pick-image-note { color: #b45309; font-size: 0.85em; margin-top: 4px; max-width: 520px; }
     </style>
 <!-- iOS / Apple Home Screen Icons & App Mode -->
 <link rel="apple-touch-icon" sizes="180x180" href="https://cutsceneartist.com/DrawThings/app-icons/icon-180.png">
@@ -2207,11 +2208,16 @@ dragHandle.addEventListener("touchend", handleTouchEnd, { passive: false });
                 thumb.className = "pick-image-thumb";
                 thumb.alt = "";
                 thumb.style.display = "none";
+                const pickNote = document.createElement("div");
+                pickNote.className = "pick-image-note";
+                pickNote.style.display = "none";
+                pickNote.textContent = "⚠️ Name filled in from your pick — the run will fail with a file error unless this exact file is also in Draw Things' Pictures folder. To put it there: import it onto the canvas in Draw Things, then Save Full Image with this same name.";
                 pickBtn.addEventListener("click", () => fileInput.click());
                 fileInput.addEventListener("change", () => {
                     const file = fileInput.files && fileInput.files[0];
                     if (!file) return;
                     input.value = file.name;
+                    pickNote.style.display = "";
                     try {
                         thumb.src = URL.createObjectURL(file);
                         thumb.style.display = "";
@@ -2221,6 +2227,7 @@ dragHandle.addEventListener("touchend", handleTouchEnd, { passive: false });
                 el.appendChild(pickBtn);
                 el.appendChild(fileInput);
                 el.appendChild(thumb);
+                el.appendChild(pickNote);
             }
             el.dataset.valueType = "string";
             container.appendChild(el);
