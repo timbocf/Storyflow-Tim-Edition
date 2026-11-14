@@ -258,6 +258,9 @@ const pathStrings = instructions.flatMap((obj) =>
     .map(([key, value]) => {
       if (key === "canvasSave" || key === "loopSave") {
         return ` 🔻 ${value}`;
+      } else if (typeof value === "string" && value.startsWith("data:image/")) {
+        // [Tim edition fix] never dump a baked-in photo's data into the report
+        return ` 🔺 embedded image (baked into the project)`;
       } else {
         return ` 🔺 ${value}`;
       }
@@ -650,6 +653,35 @@ function loadPictureFile(kindLabel, fileName, action) {
       `To put it there: import the picture onto the canvas in Draw Things, then run a one-item Storyflow project with Save Full Image using this same name. ` +
       `(Draw Things said: ${e && e.message ? e.message : e})`
     );
+  }
+}
+
+// [Tim edition fix] Baked-in photos: the Editor can embed a picked photo in
+// the project itself as a data URI (the instruction value starts with
+// "data:image/"). That is the one route that works end-to-end on iPad — a
+// browser can never copy a Photos picture into Draw Things' Pictures
+// folder, but the project text is pasted in anyway, so the photo rides
+// along inside it. Loading a data URI is proven Draw Things behavior: the
+// Pipeline's own Color Fill (colorfill) loads its swatches exactly this way.
+function isEmbeddedImage(value) {
+  return typeof value === "string" && value.startsWith("data:image/");
+}
+
+function addEmbeddedToMoodboard(dataUri) {
+  // First try the same call the file route uses, with the data URI as src.
+  try {
+    canvas.addToMoodboardFromSrc([dataUri]);
+    return;
+  } catch (e) { /* fall through to the canvas bounce */ }
+  // Bounce through the canvas using only proven calls: bank the current
+  // canvas, put the embedded photo on it, send it to the moodboard the way
+  // Canvas to Moodboard does, then put the banked canvas back.
+  const bank = canvas.saveImageSrc(true);
+  try {
+    canvas.loadImageSrc(dataUri);
+    canvas.addToMoodboardFromSrc(canvas.saveImageSrc(true));
+  } finally {
+    canvas.loadImageSrc(bank);
   }
 }
 
@@ -1414,8 +1446,13 @@ for (let i = 0; i < instructions.length; i++) {
     case "canvasLoad":
       // update config before Loading canvas png
       canvas.updateCanvasSize(configuration);
-      Pvalue = picturesPath + "/" + value;
-      loadPictureFile("Load Image", value, () => canvas.loadImage(Pvalue)); // [Tim edition fix] plain-words error if the file isn't in Pictures
+      if (isEmbeddedImage(value)) {
+        // [Tim edition fix] photo baked into the project — load it directly
+        canvas.loadImageSrc(value);
+      } else {
+        Pvalue = picturesPath + "/" + value;
+        loadPictureFile("Load Image", value, () => canvas.loadImage(Pvalue)); // [Tim edition fix] plain-words error if the file isn't in Pictures
+      }
       __dtSleep(sleep);
       break;
 
@@ -1466,9 +1503,13 @@ for (let i = 0; i < instructions.length; i++) {
       break;
 
     case "moodboardAdd":
-      // add to moodboard from file
-      Pvalue = "file://" + picturesPath + "/" + value;
-      loadPictureFile("Add to Moodboard", value, () => canvas.addToMoodboardFromSrc([Pvalue])); // [Tim edition fix] plain-words error if the file isn't in Pictures
+      // add to moodboard from file — or from a photo baked into the project
+      if (isEmbeddedImage(value)) {
+        addEmbeddedToMoodboard(value); // [Tim edition fix]
+      } else {
+        Pvalue = "file://" + picturesPath + "/" + value;
+        loadPictureFile("Add to Moodboard", value, () => canvas.addToMoodboardFromSrc([Pvalue])); // [Tim edition fix] plain-words error if the file isn't in Pictures
+      }
       __dtSleep(0.2);
       break;
 

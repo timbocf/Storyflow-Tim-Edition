@@ -1534,8 +1534,8 @@ const ITEM_HELP = {
     moodboardRemove: "Removes a moodboard image by index (starts at 0).",
     canvasSave: "Saves the WHOLE canvas as PNG to Pictures (folder must exist; overwrites same-name).",
     canvasSaveArea: "Saves only the visible render area as PNG to Pictures.",
-    canvasLoad: "Loads an image from Pictures onto the canvas (clears + scales to render size). 🖼️ Pick fills in the name from a photo/file — the image must be a PNG in Draw Things' Pictures folder (in Draw Things: import the photo, then Save it with a name).",
-    moodboardAdd: "Loads an image from Pictures onto the moodboard. 🖼️ Pick fills in the name from a photo/file — the image must be a PNG in Draw Things' Pictures folder.",
+    canvasLoad: "Puts an image on the canvas. 🖼️ Pick… bakes the photo into the project itself — no file needed in Pictures (kept at up to 1280px). Or type the name of a file already in Draw Things' Pictures folder. The image lands at its own size at 0,0 — it is NOT scaled to the render size; follow with Adapt Size or Move & Scale if it must fit.",
+    moodboardAdd: "Adds an image to the moodboard. 🖼️ Pick… bakes the photo into the project itself — no file needed in Pictures (kept at up to 1280px). Or type the name of a file already in Draw Things' Pictures folder.",
     loopAddMB: "Loop only: each pass adds the NEXT image from this folder to the moodboard.",
     loopLoad: "Loop only: each pass loads the NEXT image from this folder.",
     loopLoadMask: "Loop only: each pass loads the NEXT mask from this folder (pairs with Load Image).",
@@ -2072,6 +2072,39 @@ function resolveposeJSONShortcuts(text) {
 /* ===========================
    Create item DOM
    =========================== */
+/* [Tim edition] Bake a picked photo into the project itself: downscale it
+   and store it on the item as a data URI. The Pipeline can load a data URI
+   directly (its own Color Fill does exactly this), so the photo travels
+   inside the exported project — no file in Draw Things' Pictures folder
+   needed, which is the only route that works end-to-end on iPad, where a
+   browser can never copy a Photos picture into another app's storage.
+   Any failure (undecodable format etc.) quietly leaves name-only mode. */
+const EMBED_NOTE_TEXT = "✓ This photo is baked into the project — it loads in Draw Things with no file needed, nothing to save into Pictures first. (Kept at up to 1280px, which is plenty for frames and references.) To use a full-size Pictures file instead, just type its name over the field.";
+const PICK_WARN_TEXT = "⚠️ Name filled in from your pick — the run will fail with a file error unless this exact file is also in Draw Things' Pictures folder. To put it there: import it onto the canvas in Draw Things, then Save Full Image with this same name.";
+function embedPickedImage(file, itemEl, noteEl) {
+    try {
+        const url = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = () => {
+            try {
+                const MAX = 1280;
+                const scale = Math.min(1, MAX / Math.max(img.naturalWidth || 1, img.naturalHeight || 1));
+                const c = document.createElement("canvas");
+                c.width = Math.max(1, Math.round((img.naturalWidth || 1) * scale));
+                c.height = Math.max(1, Math.round((img.naturalHeight || 1) * scale));
+                c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+                itemEl.dataset.embedData = c.toDataURL("image/jpeg", 0.85);
+                noteEl.textContent = EMBED_NOTE_TEXT;
+                noteEl.style.display = "";
+            } catch (e) { /* encoding failed — name-only mode stands */ }
+            try { URL.revokeObjectURL(url); } catch (e) {}
+            updatePreview();
+        };
+        img.onerror = () => { try { URL.revokeObjectURL(url); } catch (e) {} };
+        img.src = url;
+    } catch (e) { /* name-only mode stands */ }
+}
+
 function createItemElement(itemObj = { type: "prompt", value: "" }, skipUpdate = false) {
     const container = document.createElement("div");
     container.className = "item fam-" + itemFamily(itemObj.type); // [Tim edition] family color band
@@ -2184,7 +2217,16 @@ dragHandle.addEventListener("touchend", handleTouchEnd, { passive: false });
             input.type = "text";
             input.placeholder = cfg.placeholder;
             input.value = itemObj.value || "";
-            input.addEventListener("input", () => updatePreview());
+            input.addEventListener("input", () => {
+                // [Tim edition] Typing a file name by hand takes the item out
+                // of baked-in-photo mode: the typed name is what will run.
+                if (container.dataset.embedData) {
+                    delete container.dataset.embedData;
+                    const n = el.querySelector(".pick-image-note");
+                    if (n) { n.textContent = PICK_WARN_TEXT; n.style.display = ""; }
+                }
+                updatePreview();
+            });
 
             el.appendChild(input);
 
@@ -2217,13 +2259,29 @@ dragHandle.addEventListener("touchend", handleTouchEnd, { passive: false });
                     const file = fileInput.files && fileInput.files[0];
                     if (!file) return;
                     input.value = file.name;
+                    pickNote.textContent = PICK_WARN_TEXT;
                     pickNote.style.display = "";
                     try {
                         thumb.src = URL.createObjectURL(file);
                         thumb.style.display = "";
                     } catch (e) { /* preview is a nicety, not required */ }
+                    // [Tim edition] On Load Image / Add to Moodboard, also bake
+                    // the photo into the project so it loads with no file at
+                    // all. (Load Mask stays name-only: masks are made in-app.)
+                    if (itemObj.type === "canvasLoad" || itemObj.type === "moodboardAdd") {
+                        embedPickedImage(file, container, pickNote);
+                    }
                     updatePreview();
                 });
+                // [Tim edition] Restoring a project whose photo was baked in:
+                // put the data back on the item and say so.
+                if (itemObj.embed && (itemObj.type === "canvasLoad" || itemObj.type === "moodboardAdd")) {
+                    container.dataset.embedData = itemObj.embed;
+                    thumb.src = itemObj.embed;
+                    thumb.style.display = "";
+                    pickNote.textContent = EMBED_NOTE_TEXT;
+                    pickNote.style.display = "";
+                }
                 el.appendChild(pickBtn);
                 el.appendChild(fileInput);
                 el.appendChild(thumb);
@@ -2491,7 +2549,12 @@ function readItemsFromDOM() {
     } else {
         value = true;
     }
-    items.push({ type, value });
+    const obj = { type, value };
+    // [Tim edition] A baked-in photo rides along in the saved project data.
+    if ((type === "canvasLoad" || type === "moodboardAdd") && el.dataset.embedData) {
+        obj.embed = el.dataset.embedData;
+    }
+    items.push(obj);
   });
   return items;
 }
@@ -2499,7 +2562,7 @@ function readItemsFromDOM() {
 /* ===========================
    Add item (to DOM)
    =========================== */
-function addItem(type = "prompt", value = undefined, skipUpdate = false) {
+function addItem(type = "prompt", value = undefined, skipUpdate = false, embed = undefined) {
     clearDragHighlight();
     if (!skipUpdate) pushUndoSnapshot(); // [Tim edition] additions are undoable
 
@@ -2513,6 +2576,7 @@ function addItem(type = "prompt", value = undefined, skipUpdate = false) {
     }
 
     const itemObj = { type, value: resolvedValue };
+    if (embed) itemObj.embed = embed; // [Tim edition] baked-in photo, when restoring a saved project
     const el = createItemElement(itemObj, skipUpdate);
     document.getElementById("itemtList").appendChild(el);
     
@@ -3053,7 +3117,7 @@ if (fileContent) {
              it.type === "maskAsk" ||
              it.type === "askZoom"
         ) {
-             output += `[${idx + 1}] ${it.type}: ${JSON.stringify(it.value)}\n\n`;
+             output += `[${idx + 1}] ${it.type}: ${it.embed ? `📷 embedded photo "${it.value}" (travels inside the project)` : JSON.stringify(it.value)}\n\n`;
         } else if (it.type === "frames") {
              // [Tim edition fix] seconds now use value/fps, matching the
              // item badges (was (value-1)/fps for all three frame types)
@@ -3142,7 +3206,7 @@ function applyProjectData(data) {
     }
 
     if (data.items && Array.isArray(data.items) && data.items.length > 0) {
-        data.items.forEach((it) => addItem(it.type, it.value, true));
+        data.items.forEach((it) => addItem(it.type, it.value, true, it.embed));
     } else {
         addItem("note", "", true);
     }
@@ -3443,7 +3507,7 @@ function loadProject() {
                 }
 
                 if (data.items && Array.isArray(data.items) && data.items.length > 0) {
-                    data.items.forEach((it) => addItem(it.type, it.value, true));
+                    data.items.forEach((it) => addItem(it.type, it.value, true, it.embed));
                 } else {
                     addItem("prompt", "", true);
                 }
@@ -3583,6 +3647,12 @@ function generateInstructionString() {
             it.type === "matte"
         ) {
             instructionString = `{"${it.type}": ${it.value}}`;
+        } else if (
+            (it.type === "canvasLoad" || it.type === "moodboardAdd") && it.embed
+        ) {
+            // [Tim edition] The photo itself is the instruction value — the
+            // Pipeline loads a data URI directly, no Pictures file needed.
+            instructionString = `{"${it.type}": ${JSON.stringify(it.embed)}}`;
         } else if (
             it.type === "canvasSave" ||
             it.type === "canvasSaveArea" ||
