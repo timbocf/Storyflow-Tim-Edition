@@ -1540,7 +1540,7 @@ const ITEM_HELP = {
     moodboardWeights: "Weight 0–1 per moodboard slot. Modern edit models: >0 = use it, 0 = ignore.",
     size: "Sets canvas width/height (multiples of 64) and resizes immediately.",
     inpaintTools: "Inpaint settings: strength, mask blur, blur outset, keep-original switch.",
-    wildcard: "Adds one card from its list to the bucket, picked at runtime by its mode.",
+    wildcard: "Runtime picker with its OWN card list (the animals are just the demo — replace them). It does NOT use your Wildcards tab. For those, type $ + the name (e.g. $tall blonde) inside prompt text instead.",
     sweep: "Steps ONE named setting through its value cards by mode. No range checking — values are trusted.",
     framesDialog: "Sets frame count from words inside \"quotes\" in the bucket at a speaking pace. Generate = also renders now.",
     hrf: "High-res fix settings: on/off, width, height, strength.",
@@ -2000,7 +2000,7 @@ function addWildcard(key = "", value = "", skipUpdate = false) {
     container.className = "wildcard-shortcut";
     
     const keyInput = document.createElement("input");
-    keyInput.placeholder = "shortcut (e.g. $sky)";
+    keyInput.placeholder = "name (e.g. tall blonde)";
     keyInput.value = key;
     keyInput.oninput = () => { saveWildcardShortcuts(); updatePreview(); };
     
@@ -2863,16 +2863,38 @@ function resolveConfigShortcuts(text) {
   return replaced;
 }
 
+/* [Tim edition fix] Wildcard names may contain spaces ("tall blonde") and
+   the $ is optional in the Wildcards tab's name field. The old pattern
+   ($ + [a-zA-Z0-9_]+) could never match a space, so a naturally-named
+   wildcard silently did nothing. Resolution now matches the library's
+   actual names, longest first so overlapping names resolve correctly. */
+function wildcardLookup() {
+    const map = {};
+    Object.keys(wildcardShortcuts).forEach(k => {
+        const bare = k.replace(/^\$/, "").trim();
+        if (bare) map[bare] = wildcardShortcuts[k];
+    });
+    return map;
+}
+function wildcardPattern() {
+    const names = Object.keys(wildcardLookup()).sort((a, b) => b.length - a.length);
+    if (names.length === 0) return null;
+    const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return new RegExp("\\$(" + names.map(esc).join("|") + ")(\\[\\d+\\])?", "g");
+}
+
 function resolveWildcardShortcuts(text) {
     if (!text) return "";
+    const pattern = wildcardPattern();
+    if (!pattern) return text;
+    const map = wildcardLookup();
     let replaced = text;
-    const wildcardPattern = /(\$[a-zA-Z0-9_]+)(\[\d+\])?/g; 
     let prev;
     let passes = 0;
     do {
         prev = replaced;
-        replaced = replaced.replace(wildcardPattern, (match, key, indexGroup) => {
-            const valueString = wildcardShortcuts[key];
+        replaced = replaced.replace(pattern, (match, key, indexGroup) => {
+            const valueString = map[key];
             if (!valueString) {
                 return match; 
             }
@@ -3422,8 +3444,11 @@ function guardExport(items) {
    first option (or the [n] indexed one). */
 function resolveWildcardShortcutsPreview(text) {
     if (!text) return "";
-    return text.replace(/(\$[a-zA-Z0-9_]+)(\[\d+\])?/g, (match, key, indexGroup) => {
-        const valueString = wildcardShortcuts[key];
+    const pattern = wildcardPattern();
+    if (!pattern) return text;
+    const map = wildcardLookup();
+    return text.replace(pattern, (match, key, indexGroup) => {
+        const valueString = map[key];
         if (!valueString) return match;
         const options = valueString.split('|').map(s => s.trim()).filter(s => s.length > 0);
         if (!options.length) return match;

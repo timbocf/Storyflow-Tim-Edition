@@ -30,6 +30,16 @@
 
 <div class="warn"><strong>Don't confuse the two "wildcards":</strong> the <code>$name</code> wildcards in the Editor's Wildcards tab are picked <em>once, at export time</em>, and the exported text is fixed. The <strong>Wildcard instruction</strong> on this page is picked <em>at runtime, inside Draw Things</em>, every time the run reaches it. Same word, different machine.</div>
 
+<h2>The Editor's $ wildcards (the Wildcards tab)</h2>
+<p>Define these in the Editor's <strong>Wildcards</strong> library tab, then use them <em>inside prompt text</em> — Add Text, Prompt, Prefix, Negative — by typing a dollar sign and the name: <code>$tall blonde</code>. There is no instruction item for them; they live in your text.</p>
+<table>
+<tr><th>Piece</th><th>How it works</th></tr>
+<tr><td><strong>Name</strong></td><td>Plain words are fine — spaces included (<code>tall blonde</code>). The <code>$</code> is optional in the name field; typing it there too is harmless. Use the name in text as <code>$tall blonde</code>.</td></tr>
+<tr><td><strong>Value</strong></td><td>One phrase, or several options separated by <code>|</code> — e.g. <code>blue sky|dawn|sunset</code>. A single phrase with no <code>|</code> is a reusable snippet: it is swapped in as-is, every time.</td></tr>
+<tr><td><strong>Picking</strong></td><td>Happens <strong>once, at export</strong>: a random option is chosen and baked into the exported text (re-export to re-roll). Preview shows the first option so you can sanity-check. <code>$sky[2]</code> forces option 2 exactly.</td></tr>
+<tr><td><strong>Where it works</strong></td><td>Prompt-bearing text only (Add Text / Prompt / Prefix / Negative). It does <em>not</em> work inside the Wildcard instruction below — that node reads only its own card list.</td></tr>
+</table>
+
 <h2>The six picking modes</h2>
 <p>Wildcard and Sweep share the same six modes. Each individual Wildcard/Sweep item keeps its own place in its own list — two items never share a counter (except in loop mode, below).</p>
 <table>
