@@ -37,7 +37,7 @@
 <tr><td><strong>Name</strong></td><td>Plain words are fine — spaces included (<code>tall blonde</code>). The <code>$</code> is optional in the name field; typing it there too is harmless. Use the name in text as <code>$tall blonde</code>.</td></tr>
 <tr><td><strong>Value</strong></td><td>One phrase, or several options separated by <code>|</code> — e.g. <code>blue sky|dawn|sunset</code>. A single phrase with no <code>|</code> is a reusable snippet: it is swapped in as-is, every time.</td></tr>
 <tr><td><strong>Picking</strong></td><td>Happens <strong>once, at export</strong>: a random option is chosen and baked into the exported text (re-export to re-roll). Preview shows the first option so you can sanity-check. <code>$sky[2]</code> forces option 2 exactly.</td></tr>
-<tr><td><strong>Where it works</strong></td><td>Prompt-bearing text only (Add Text / Prompt / Prefix / Negative). It does <em>not</em> work inside the Wildcard instruction below — that node reads only its own card list.</td></tr>
+<tr><td><strong>Where it works</strong></td><td>Prompt-bearing text (Add Text / Prompt / Prefix / Negative). Inside the Wildcard instruction below, use its <strong>📚 Fill cards from Wildcards tab</strong> dropdown: picking a tab entry copies that entry's options into the node's cards (a one-time snapshot — later tab edits don't rewrite nodes you've already filled).</td></tr>
 </table>
 
 <h2>The six picking modes</h2>

@@ -1540,7 +1540,7 @@ const ITEM_HELP = {
     moodboardWeights: "Weight 0–1 per moodboard slot. Modern edit models: >0 = use it, 0 = ignore.",
     size: "Sets canvas width/height (multiples of 64) and resizes immediately.",
     inpaintTools: "Inpaint settings: strength, mask blur, blur outset, keep-original switch.",
-    wildcard: "Runtime picker with its OWN card list (the animals are just the demo — replace them). It does NOT use your Wildcards tab. For those, type $ + the name (e.g. $tall blonde) inside prompt text instead.",
+    wildcard: "Runtime picker with its own card list (the animals are just the demo — replace them, or use the 📚 dropdown under the cards to fill them from a Wildcards-tab entry). Different from $ wildcards in prompt text, which are picked once at export.",
     sweep: "Steps ONE named setting through its value cards by mode. No range checking — values are trusted.",
     framesDialog: "Sets frame count from words inside \"quotes\" in the bucket at a speaking pace. Generate = also renders now.",
     hrf: "High-res fix settings: on/off, width, height, strength.",
@@ -1823,7 +1823,43 @@ function buildJsonForm(type, rawVal) {
                 <label class="json-param-label">${isSweep ? "Values" : "Cards"} (1 per line):</label>
                 <textarea data-key="cards" data-type="array">${cardsText}</textarea>
             </div>
+            ${!isSweep ? `<div class="json-field">
+                <label class="json-param-label">📚 Fill cards from Wildcards tab:</label>
+                <select class="wildcard-library-fill"><option value="">— choose a tab entry —</option></select>
+            </div>` : ''}
         `;
+        if (!isSweep) {
+            // [Tim edition fix] The Wildcard node and the Wildcards tab are
+            // separate systems, but the tab should be able to feed the node:
+            // choosing an entry copies its options into this node's cards
+            // (a snapshot — later tab edits don't rewrite existing nodes).
+            const fillSelect = container.querySelector(".wildcard-library-fill");
+            const cardsArea = container.querySelector('textarea[data-key="cards"]');
+            const refreshFillOptions = () => {
+                if (typeof wildcardLookup !== "function") return;
+                const current = fillSelect.value;
+                const names = Object.keys(wildcardLookup());
+                fillSelect.innerHTML = '<option value="">— choose a tab entry —</option>' +
+                    names.map(n => `<option value="${n.replace(/"/g, "&quot;")}">${n}</option>`).join("");
+                if (names.length === 0) {
+                    fillSelect.innerHTML = '<option value="">(Wildcards tab is empty)</option>';
+                    fillSelect.disabled = true;
+                } else {
+                    fillSelect.disabled = false;
+                    if (names.includes(current)) fillSelect.value = current;
+                }
+            };
+            refreshFillOptions();
+            fillSelect.addEventListener("focus", refreshFillOptions);
+            fillSelect.addEventListener("change", () => {
+                const name = fillSelect.value;
+                if (!name) return;
+                const valueString = wildcardLookup()[name];
+                if (!valueString) return;
+                cardsArea.value = valueString.split("|").map(s => s.trim()).filter(Boolean).join("\n");
+                updateValue();
+            });
+        }
     } else if (type === "matte") {
     const colorOptions = ["black", "white", "red", "green", "blue", "yellow", "cyan", "magenta"];
     const currentColor = val.color ?? schema.color ?? "black";
