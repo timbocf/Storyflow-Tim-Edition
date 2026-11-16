@@ -1245,6 +1245,23 @@ let _startCount = 0;
 let sleep = 0.1;
 let concat = "";
 
+// [Tim edition fix] Join text pieces with a space instead of gluing them
+// raw: "a tall woman" + "in a red dress" used to come out as "a tall
+// womanin a red dress". A space is added only when neither side already
+// has whitespace and the incoming piece does not start with punctuation,
+// so ", smiling" and "woman," still join exactly as typed.
+function appendToConcat(text) {
+  if (!text) return;
+  if (concat && !/\s$/.test(concat) && !/^\s/.test(text) && !/^[,.!?;:%]/.test(text)) concat += " ";
+  concat += text;
+}
+function prependToConcat(text) {
+  if (!text) return;
+  if (concat && !/\s$/.test(text) && !/^\s/.test(concat) && !/^[,.!?;:%]/.test(concat)) text += " ";
+  concat = text + concat;
+}
+
+
 // Process each instruction in the array
 //
 for (let i = 0; i < instructions.length; i++) {
@@ -1261,25 +1278,25 @@ for (let i = 0; i < instructions.length; i++) {
 
     case "prompt":
       // Prompt triggers canvas update and generate
-      concat = concat + value,
+      appendToConcat(value);
       generate();
       concat = "";
       break;
 
     case "concat":
       // concatenate prompt
-      concat = concat + value;
+      appendToConcat(value);
       break;
 
     case "prefix":
       // prefix concat
-      concat = value + concat;
+      prependToConcat(value);
       break;
 
     case "interrogate": {
       // adds to concat
       const answer = canvas.answer(askModel, value);
-      concat = concat + answer;
+      appendToConcat(answer);
       break;
     }
 
@@ -1307,12 +1324,12 @@ for (let i = 0; i < instructions.length; i++) {
       const wild = String(value.wild || "").toLowerCase();
       const options = Array.isArray(value.cards) ? value.cards : (Array.isArray(value.options) ? value.options : []);
       if (wild === "menu") {
-        concat = concat + pickCardFromMenu(options);
+        appendToConcat(pickCardFromMenu(options));
       } else if (wild === "combobox") {
-        concat = concat + pickCardFromComboBox(options);
+        appendToConcat(pickCardFromComboBox(options));
       } else if (wildcardRegistry[i]) {
         const pickedCard = wildcardRegistry[i].getNextCard(_loopCounter);
-        concat = concat + pickedCard;
+        appendToConcat(pickedCard);
       }
       break;
     }
@@ -1326,7 +1343,7 @@ for (let i = 0; i < instructions.length; i++) {
       // append the prompt currently in Draw Things' UI prompt box to concat
       // [Tim edition fix: was `concat = pipeline.prompts.prompt`, which wiped
       // everything already built up in concat instead of adding to it]
-      concat = concat + (pipeline.prompts.prompt || "");
+      appendToConcat(pipeline.prompts.prompt || "");
       break;
 
     case "config":
