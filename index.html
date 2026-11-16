@@ -1839,14 +1839,17 @@ function buildJsonForm(type, rawVal) {
                 if (typeof wildcardLookup !== "function") return;
                 const current = fillSelect.value;
                 const names = Object.keys(wildcardLookup());
-                fillSelect.innerHTML = '<option value="">— choose a tab entry —</option>' +
+                // [Tim edition fix] "All entries" lets ONE node cycle the
+                // whole tab — no extra nodes needed for plain variety.
+                const allOption = names.length > 1 ? '<option value="__ALL_ENTRIES__">📚 All tab entries combined</option>' : '';
+                fillSelect.innerHTML = '<option value="">— choose a tab entry —</option>' + allOption +
                     names.map(n => `<option value="${n.replace(/"/g, "&quot;")}">${n}</option>`).join("");
                 if (names.length === 0) {
                     fillSelect.innerHTML = '<option value="">(Wildcards tab is empty)</option>';
                     fillSelect.disabled = true;
                 } else {
                     fillSelect.disabled = false;
-                    if (names.includes(current)) fillSelect.value = current;
+                    if (names.includes(current) || current === "__ALL_ENTRIES__") fillSelect.value = current;
                 }
             };
             refreshFillOptions();
@@ -1854,9 +1857,16 @@ function buildJsonForm(type, rawVal) {
             fillSelect.addEventListener("change", () => {
                 const name = fillSelect.value;
                 if (!name) return;
-                const valueString = wildcardLookup()[name];
-                if (!valueString) return;
-                cardsArea.value = valueString.split("|").map(s => s.trim()).filter(Boolean).join("\n");
+                const lookup = wildcardLookup();
+                let options;
+                if (name === "__ALL_ENTRIES__") {
+                    options = Object.values(lookup).flatMap(v => v.split("|").map(s => s.trim()).filter(Boolean));
+                } else {
+                    const valueString = lookup[name];
+                    if (!valueString) return;
+                    options = valueString.split("|").map(s => s.trim()).filter(Boolean);
+                }
+                cardsArea.value = options.join("\n");
                 updateValue();
             });
         }
